@@ -4,29 +4,35 @@
 
 const int NUM_PATTERNS = 1;
 
-struct Config {
-	int LED_PIN;
-	int NUM_LEDS;
-	int BRIGHTNESS;
-	char const *LED_TYPE;
-	char const *COLOR_ORDER;
-	int UPDATES_PER_SECOND;
-	char const *PATTERNS[NUM_PATTERNS] = {
-		"blink"
-	};
+class Config {
+
+	public:
+		Config();
+		void initialize();
+		const int get_num_leds();
+
+	private:
+		int LED_PIN;
+		const int NUM_LEDS = 20;
+		int BRIGHTNESS;
+		char const *LED_TYPE;
+		char const *COLOR_ORDER;
+		int UPDATES_PER_SECOND;
+		char const *PATTERNS[NUM_PATTERNS] = {
+			"blink"
+		};
 };
 
 
-Config load_configuration() {
+Config::Config() {
 	
-	Config cfg;
+	this->LED_PIN = 2;
+	//this->NUM_LEDS = 20;
+	this->BRIGHTNESS = 64;
+	this->LED_TYPE = "WS2812B";
+	this->COLOR_ORDER = "GRB";
+	this->UPDATES_PER_SECOND = 100;
 
-	cfg.LED_PIN = 5;
-	cfg.NUM_LEDS = 63;
-	cfg.BRIGHTNESS = 64;
-	cfg.LED_TYPE = "WS2811";
-	cfg.COLOR_ORDER = "GRB";
-	cfg.UPDATES_PER_SECOND = 100;
-
-	return cfg;
 };
+
+const int Config::get_num_leds() { return this->NUM_LEDS; };
