@@ -9,7 +9,7 @@ class Config {
 	public:
 		Config();
 		void initialize();
-		const int get_num_leds();
+		const int getNumLEDs();
 
 	private:
 		int LED_PIN;
@@ -35,4 +35,4 @@ Config::Config() {
 
 };
 
-const int Config::get_num_leds() { return this->NUM_LEDS; };
+const int Config::getNumLEDs() { return this->NUM_LEDS; };
