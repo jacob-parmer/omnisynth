@@ -20,6 +20,7 @@
 
 typedef std::array<byte, MIDI_PACKET_SIZE> midi_message;
 
+/* ------------------- CLASS DEFINITION ------------------- */
 class OmniMIDI {
 
     public:
@@ -69,7 +70,7 @@ void OmniMIDI::read() {
 }
 
 void OmniMIDI::omniNoteOn(midi_message msg) {
-    Serial.print("Note on detected.");
+    Serial.println("Note on detected.");
     this->notes_on.push_back(msg);
     Serial.println(notes_on.size());
 }
@@ -86,3 +87,24 @@ void OmniMIDI::omniNoteOff(midi_message msg) {
 }
 
 std::vector<midi_message> OmniMIDI::getNotesOn() { return this->notes_on; }
+
+
+/* ------------------- HELPER FUNCTIONS ------------------- */
+
+float avgNoteVelocity(std::vector<midi_message> notes_on) {
+
+    int velocity_sum = 0;
+    for (std::vector<midi_message>::iterator it = notes_on.begin(); it != notes_on.end(); ++it) {
+        midi_message note = *it;
+        velocity_sum += note[VELOCITY_INDEX];
+    }
+
+    Serial.print("Velocity sum: ");
+    Serial.println(velocity_sum);
+    float avg_velocity = velocity_sum / notes_on.size();
+
+     Serial.print("Average velocity: ");
+    Serial.println(avg_velocity);   
+    return avg_velocity;
+
+}
