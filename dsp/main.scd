@@ -1,5 +1,6 @@
 /*
-desc: Mellotron-like patch.
+desc: Main / top level for the Omnisynth.
+author: Omar Barazanji
 date: 1/16/21
 */
 
@@ -14,10 +15,11 @@ s.boot;
 ~notes_on_count = 0;
 ~notes_on_ndx = Array.newClear(128);
 
-// Default patch
+// Default patch params
 ~synth = "tone1";
 ~lpf_cutoff = 20000;
 ~hpf_cutoff = 20;
+~volume = 127;
 
 // Set freq to standard Hz
 nil.set(\freq, 880);
@@ -58,6 +60,9 @@ o = OSCFunc( {
 			if (msg[2] == "hpf".asSymbol) {
 				~hpf_cutoff = msg[3].asFloat;
 			};
+			if (msg[2] == "vol".asSymbol) {
+				~volume = msg[3].asFloat;
+			};
 			if (~notes_on_count > 0) {
 				for (0,~notes_on_count, {
 					arg i;
@@ -85,7 +90,7 @@ Note on function.
 MIDIdef.noteOn(\noteOnDef, {
 	arg vel, nn, chan, src;
 	[vel, nn].postln;
-	//n.sendMsg("/noteOn", nn);
+	n.sendMsg("/noteOn", nn, vel);
 	~notes_on.add(nn);
 	~notes_on_ndx[nn] = ~notes_on_count;
 	~notes_on_count = ~notes_on_count + 1;
@@ -94,6 +99,7 @@ MIDIdef.noteOn(\noteOnDef, {
 		[
 			\freq, nn.midicps,
 			\amp, vel.linexp(1,127,0.01,0.03),
+			\vol, ~volume.linexp(1,127,0.01, 2),
 			\gate, 1,
 			\bend, ~bend.linlin(0,16383,-2,2),
 			\lpf_cutoff, ~lpf_cutoff,
@@ -108,6 +114,7 @@ Note off function.
 MIDIdef.noteOff(\noteOffDef, {
 	arg vel, nn;
 	[vel, nn].postln;
+	n.sendMsg("/noteOff", nn, vel);
 	~notes_on_count = ~notes_on_count - 1;
 	~notes_on.removeAt(~notes_on_ndx[nn]);
 	~notes_on_ndx[nn] = nil;
