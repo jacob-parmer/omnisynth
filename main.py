@@ -35,9 +35,9 @@ class Omni():
         #     organization: self.knob_map[knob_addr] = filter_name.
         self.knob_map = dict()
 
-
+        # holds history of last value sent through the UDP stream to SC.
+        #     organization: self.knob_map_hist[filter_name] = value.
         self.knob_map_hist = dict()
-
 
         # Table that will be outputted to DAC & Mux
         self.cv_table = [[0 for x in range(8)] for y in range(4)] 
@@ -49,7 +49,6 @@ class Omni():
 
     # opens UDP stream for MIDI control messages.
     def open_stream(self, *args):
-        temp = self.knob_table
         self.sc.receive("/control")
         self.evnt = self.sc.midi_evnt
         if self.midi_learn_on:
@@ -58,7 +57,9 @@ class Omni():
             for knob_addr in self.knob_map:
                 filter_name = self.knob_map[knob_addr]
                 raw_value = self.knob_table[knob_addr]
-                value = self.cc_to_freq[raw_value]
+                if filter_name == "lpf" or filter_name == "hpf":
+                    value = self.cc_to_freq[raw_value]
+                else: value = raw_value
                 self.filter_sel(filter_name, value)
 
     # implement a way to close stream (may be on GUI).
@@ -93,8 +94,7 @@ class Omni():
         if filter_name in self.knob_map_hist and self.knob_map_hist[filter_name] != value:
             self.sc.transmit(command, control, filter_name, value)
             self.knob_map_hist[filter_name] = value
-        elif filter_name not in self.knob_map_hist:
-            print("added", filter_name)
+        elif filter_name not in self.knob_map_hist: # if first instance
             self.sc.transmit(command, control, filter_name, value)
             self.knob_map_hist[filter_name] = value
 
