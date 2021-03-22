@@ -35,7 +35,7 @@ SynthDef.new("tone1", {
 	/*
 	Putting all components together.
 	*/
-	sig = filter_sig * env * amp!2;
+	sig = filter_sig * env * amp !2;
 
 	Out.ar(out, sig);
 }).store;
