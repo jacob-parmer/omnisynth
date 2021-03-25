@@ -10,18 +10,28 @@ Python 3.7.x
 import numpy as np
 import os
 
+
 # Used for sending / receiving data from supercollider.
 from pi.osc import OmniCollider
+from pi.omnimidi import OmniMidi
 
 class Omni():
 
     def __init__(self):
 
         # initialize OSC module for UDP communication with Supercollider.
-        self.sc = OmniCollider()
+        self.sc = OmniCollider(500)
+        self.sc.map_dispatcher("/control")
+        self.sc.map_dispatcher("/noteOn")
+        self.sc.map_dispatcher("/noteOff")
 
-        # holds midi messages from UDP stream.
-        self.evnt = []
+        # Initialize Teensy serial communication
+        # self.teensy = OmniMidi()
+
+        # holds control messages from UDP stream.
+        self.control_evnt = []
+
+        self.note_evnt = []
 
         # used for turning on midi learn.
         self.midi_learn_on = False
@@ -49,18 +59,28 @@ class Omni():
 
     # opens UDP stream for MIDI control messages.
     def open_stream(self, *args):
-        self.sc.receive("/control")
-        self.evnt = self.sc.midi_evnt
-        if self.midi_learn_on:
-            self.midi_learn(self.evnt)
-        if len(self.knob_map) != 0:
-            for knob_addr in self.knob_map:
-                filter_name = self.knob_map[knob_addr]
-                raw_value = self.knob_table[knob_addr]
-                if filter_name == "lpf" or filter_name == "hpf":
-                    value = self.cc_to_freq[raw_value]
-                else: value = raw_value
-                self.filter_sel(filter_name, value)
+        self.sc.receive()
+        try:
+            event = self.sc.midi_evnt[0]
+        except IndexError:
+            event = ""
+
+        if event == "/control":
+            self.control_evnt = self.sc.midi_evnt
+            if self.midi_learn_on:
+                self.midi_learn(self.control_evnt)
+            if len(self.knob_map) != 0:
+                for knob_addr in self.knob_map:
+                    filter_name = self.knob_map[knob_addr]
+                    raw_value = self.knob_table[knob_addr]
+                    if filter_name == "lpf" or filter_name == "hpf":
+                        value = self.cc_to_freq[raw_value]
+                    else: value = raw_value
+                    self.filter_sel(filter_name, value)
+        if event == "/noteOn" or event == "noteOff":
+            self.note_evnt = self.sc.midi_evnt
+            # self.teensy.send_note(self.note_evnt)
+
 
     # implement a way to close stream (may be on GUI).
     def close_stream(self):
@@ -119,7 +139,6 @@ if __name__ == "__main__":
     OmniSynth.sc_compile() # compiles all synthDefs.
 
     # uncomment below to test midi_learn for knobs.
-
     OmniSynth.midi_learn_on = True # turn on midi learn.
     while (True):
         OmniSynth.open_stream()

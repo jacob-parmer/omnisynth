@@ -25,13 +25,16 @@ from pythonosc import osc_message_builder
 
 # Used for Asynch Rx from SC
 from pythonosc.osc_server import AsyncIOOSCUDPServer
+
 import asyncio
 import time
 
 class OmniCollider:
 
-    def __init__(self):
+    def __init__(self, delay):
+        self.delay = delay
         self.midi_evnt = []
+        self.d = dispatcher.Dispatcher()
 
     def rx_handler(self, *args):
         event = []
@@ -41,8 +44,8 @@ class OmniCollider:
         print(event)
 
     async def loop(self):
-        # roughly 5ms delay
-        for x in range(5):
+        # roughly 5ms window
+        for x in range(self.delay):
             await asyncio.sleep(0.001)
 
     async def init_main(self):
@@ -56,10 +59,11 @@ class OmniCollider:
         await self.loop()
         transport.close()
 
-    def receive(self, sc_variable):
-        self.d = dispatcher.Dispatcher()
-        self.d.map(sc_variable, self.rx_handler)
+    def receive(self):
         asyncio.run(self.init_main())
+
+    def map_dispatcher(self, sc_variable):
+        self.d.map(sc_variable, self.rx_handler)
 
     def transmit(self, command, control, *args):
         port = 57120
