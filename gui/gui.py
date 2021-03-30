@@ -36,8 +36,8 @@ from main import Omni
 OmniSynth = Omni()
 
 from kivy.core.window import Window
-Window.fullscreen = 'auto'
-Window.show_cursor = False
+# Window.fullscreen = 'auto'
+# Window.show_cursor = False
 
 knobCoords = dict()
 
@@ -132,8 +132,8 @@ class IndicatorImage(Image):
                 if len(OmniSynth.knob_table) != 0:
                     with self.canvas:
                         self.opacity = 1
-                    src = OmniSynth.evnt[2]
-                    chan = OmniSynth.evnt[3]
+                    src = OmniSynth.control_evnt[2]
+                    chan = OmniSynth.control_evnt[3]
                     knobCoords[self.knob_name] = (src, chan)
                     OmniSynth.map_knob((src,chan), self.knob_name)
 

@@ -7,7 +7,7 @@ date: 1/16/21
 // Config and global variables
 s.boot;
 
-//Server.default.options.device = "ASIO : ASIO4ALL v2";
+Server.default.options.device = "ASIO : ASIO4ALL v2";
 
 ~bend = 8193;
 ~notes = Array.newClear(128);
@@ -19,6 +19,10 @@ s.boot;
 ~synth = "tone1";
 ~lpf_cutoff = 20000;
 ~hpf_cutoff = 20;
+~attack_time = 0.01;
+~decay_time = 0.3;
+~sustain = 0.5;
+~release_time = 1.0;
 ~volume = 127;
 
 // Set freq to standard Hz
@@ -30,6 +34,7 @@ MIDIIn.connectAll;
 
 // Connection to OSC
 n = NetAddr.new("127.0.0.1", 7771);
+
 
 // begin main
 (
@@ -63,13 +68,28 @@ o = OSCFunc( {
 			if (msg[2] == "vol".asSymbol) {
 				~volume = msg[3].asFloat;
 			};
+			if (msg[2] == "attack".asSymbol) {
+				~attack_time = msg[3].asFloat;
+			};
+			if (msg[2] == "decay".asSymbol) {
+				~decay_time = msg[3].asFloat;
+			};
+			if (msg[2] == "sustain".asSymbol) {
+				~sustain = msg[3].asFloat;
+			};
+			if (msg[2] == "release".asSymbol) {
+				~release = msg[3].asFloat;
+			};
 			if (~notes_on_count > 0) {
 				for (0,~notes_on_count, {
 					arg i;
 					temp = ~notes_on[i];
 					~notes[temp].set(\lpf_cutoff, ~lpf_cutoff);
 					~notes[temp].set(\hpf_cutoff, ~hpf_cutoff);
-				});
+					~notes[temp].set(\attack_time, ~attack_time);
+					~notes[temp].set(\decay_time, ~decay_time);
+					~notes[temp].set(\sustain, ~sustain);
+					~notes[temp].set(\release_time, ~release_time);				});
 			};
 		}
 
@@ -78,8 +98,6 @@ o = OSCFunc( {
 		}
 
 		{true} {~synth = "tone1"};
-
-
 
 }, '/omni');
 
@@ -104,6 +122,10 @@ MIDIdef.noteOn(\noteOnDef, {
 			\bend, ~bend.linlin(0,16383,-2,2),
 			\lpf_cutoff, ~lpf_cutoff,
 			\hpf_cutoff, ~hpf_cutoff,
+			\attack_time, ~attack_time,
+			\decay_time, ~decay_time,
+			\sustain, ~sustain,
+			\release_time, ~release_time
 		]
 	);
 });
