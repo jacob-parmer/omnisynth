@@ -20,7 +20,7 @@ class Omni():
     def __init__(self):
 
         # initialize OSC module for UDP communication with Supercollider.
-        self.sc = OmniCollider(500)
+        self.sc = OmniCollider(17)
         self.sc.map_dispatcher("/control")
         self.sc.map_dispatcher("/noteOn")
         self.sc.map_dispatcher("/noteOff")
@@ -28,9 +28,10 @@ class Omni():
         # Initialize Teensy serial communication
         # self.teensy = OmniMidi()
 
-        # holds control messages from UDP stream.
+        # holds control events from UDP stream.
         self.control_evnt = []
 
+        # holds note on / off events from UDP stream.
         self.note_evnt = []
 
         # used for turning on midi learn.
@@ -55,6 +56,16 @@ class Omni():
         # LUT for freq control messages, maps 0-127 to 20 - 20000 Hz.
         self.cc_to_freq = np.linspace(20,20000,128).tolist()
 
+        # LUT for adsr control messages, maps 0-127 to .001 - 1 (seconds or amplitude).
+        self.cc_to_adsr = np.linspace(0.001, 1, 128).tolist()
+
+    def value_map(self, filt, inp):
+        value = inp
+        if filt == "lpf" or filt == "hpf":
+            value = self.cc_to_freq[inp]
+        if filt == "attack" or filt == "decay" or filt == "sustain" or filt == "release":
+            value = self.cc_to_adsr[inp]
+        return value
 
 
     # opens UDP stream for MIDI control messages.
@@ -73,9 +84,7 @@ class Omni():
                 for knob_addr in self.knob_map:
                     filter_name = self.knob_map[knob_addr]
                     raw_value = self.knob_table[knob_addr]
-                    if filter_name == "lpf" or filter_name == "hpf":
-                        value = self.cc_to_freq[raw_value]
-                    else: value = raw_value
+                    value = self.value_map(filter_name, raw_value)
                     self.filter_sel(filter_name, value)
         if event == "/noteOn" or event == "noteOff":
             self.note_evnt = self.sc.midi_evnt
@@ -133,6 +142,13 @@ class Omni():
     def map_knob(self, knob_addr, filter_name):
         self.knob_map[knob_addr] = filter_name
 
+def quick_map(OmniSynth):
+    OmniSynth.map_knob((7,0), "attack")
+    OmniSynth.map_knob((7,1), "decay")
+    OmniSynth.map_knob((7,2), "sustain")
+    OmniSynth.map_knob((7,3), "release")
+    OmniSynth.map_knob((10,4), "lpf")
+    OmniSynth.map_knob((10,5), "hpf")
 
 if __name__ == "__main__":
     OmniSynth = Omni() # initialize Omni class.
@@ -142,7 +158,7 @@ if __name__ == "__main__":
     OmniSynth.midi_learn_on = True # turn on midi learn.
     while (True):
         OmniSynth.open_stream()
-
+        
     #     # After midi_learn is complete, the GUI runs:
     #     # for example:
     #     #     OmniSynth.map_knob((7,1), "lpf")   

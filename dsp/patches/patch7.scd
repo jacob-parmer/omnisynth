@@ -12,7 +12,9 @@ SynthDef.new("tone7", {
 
 	arg freq=440, lpf_cutoff=20000, hpf_cutoff=20,
 		amp=0.6, gate=0, bend=0, out=0,
-        mod_freq=1000, mod_amp=500, vol=1;
+        mod_freq=1000, mod_amp=500, vol=1,
+		attack_time=0.01, decay_time=0.3, sustain=0.5, release_time=1.0,
+		bias=0.0;
 
 	var sig, mod_sig, raw_sig, filter_sig, env,
         carrier, mod;
@@ -26,7 +28,8 @@ SynthDef.new("tone7", {
 	/*
 	Envelope section.
 	*/
-	env = EnvGen.kr(Env.adsr, gate, doneAction:2);
+	env = EnvGen.kr(Env.adsr(attack_time,decay_time,sustain,
+		release_time, -4, bias), gate, doneAction:2);
 
 	/*
 	Filter section.
