@@ -50,6 +50,8 @@ class Omni():
         #     organization: self.knob_map_hist[filter_name] = value.
         self.knob_map_hist = dict()
 
+        self.note_evnt_hist = dict()
+
         # Table that will be outputted to DAC & Mux
         self.cv_table = [[0 for x in range(8)] for y in range(4)] 
 
@@ -86,19 +88,14 @@ class Omni():
                     raw_value = self.knob_table[knob_addr]
                     value = self.value_map(filter_name, raw_value)
                     self.filter_sel(filter_name, value)
-        if event == "/noteOn" or event == "noteOff":
+
+        if event == "/noteOn" or event == "/noteOff":
             self.note_evnt = self.sc.midi_evnt
-            # self.teensy.send_note(self.note_evnt)
+            nn = self.note_evnt[1]
+            vel = self.note_evnt[2]
+            temp = self.note_evnt_hist
+            self.note_evnt_hist[nn] = (event,vel)  
 
-
-    # implement a way to close stream (may be on GUI).
-    def close_stream(self):
-        pass
-
-    # update every 10ms
-    def update_cv(self):
-        # DAC & Mux update period is 10/32 ms.
-        pass
 
     # compiles all synthDef's in dsp folder.
     def sc_compile(self):
@@ -163,6 +160,3 @@ if __name__ == "__main__":
     #     # for example:
     #     #     OmniSynth.map_knob((7,1), "lpf")   
 
-    OmniSynth.synth_sel("tone1")
-    OmniSynth.filter_sel("lpf", 20000)
-    OmniSynth.filter_sel("hpf", 20)

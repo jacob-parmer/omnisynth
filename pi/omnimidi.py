@@ -9,6 +9,7 @@ Python: 3.7.x
 
 # used to package the serial data in midi format
 import midi
+import os
 from midi import MidiConnector 
 from midi import Message, NoteOff, NoteOn
 
@@ -17,11 +18,14 @@ class OmniMidi:
 
     def __init__(self):
 
-        # connection to the Teensy serial port
-        self.conn = MidiConnector('/dev/ttyACM0')
+        self.conn = 0
+        if os.path.exists('/dev/ttyACM0'):
+            # connection to the Teensy serial port
+            self.conn = MidiConnector('/dev/ttyACM0')
     
     # sends note events to Teensy.
     def send_note(self, evnt):
+        if self.conn == 0: return 0
         note = evnt[0]
         nn = self.note_event[1]
         vel = self.note_event[2]
