@@ -28,12 +28,14 @@ from pythonosc.osc_server import AsyncIOOSCUDPServer
 
 import asyncio
 import time
+from pi.omnimidi import OmniMidi
 
 class OmniCollider:
 
     def __init__(self, delay):
         self.delay = delay
         self.midi_evnt = []
+        self.teensy = OmniMidi()
         self.d = dispatcher.Dispatcher()
 
     def rx_handler(self, *args):
@@ -41,6 +43,7 @@ class OmniCollider:
         for x in args:
             event.append(x)
         self.midi_evnt = event
+        self.teensy.send_note(event)
         print(event)
 
     async def loop(self):
