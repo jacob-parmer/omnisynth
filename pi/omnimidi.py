@@ -22,20 +22,24 @@ class OmniMidi:
         if os.path.exists('/dev/ttyACM0'):
             # connection to the Teensy serial port
             self.conn = MidiConnector('/dev/ttyACM0')
+        elif os.path.exists('/dev/ttyACM1'):
+            self.conn = MidiConnector('/dev/ttyACM1')
     
     # sends note events to Teensy.
     def send_note(self, evnt):
         if self.conn == 0: return 0
         note = evnt[0]
-        nn = self.note_event[1]
-        vel = self.note_event[2]
+        nn = evnt[1]
+        vel = evnt[2]
+        msg = 0
         if note=="/noteOn":
             note_on = NoteOn(nn, vel)
             msg = Message(note_on,2)
         elif note=="/noteOff":
             note_off = NoteOff(nn, vel)
             msg = Message(note_off,2)
-        self.conn.write(msg)
+        if not msg == 0:
+            self.conn.write(msg)
 
 if __name__ == "__main__":
     pass
