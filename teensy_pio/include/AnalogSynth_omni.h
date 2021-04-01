@@ -20,6 +20,7 @@ CV PARAMETERS DEFINITIONS
 points to the voice zero parameter channels.
 Add 8 to increment param address to next voice.
 */
+#define ENVELOPE_TIMESTEP_ms 5
 #define VCO_CV_0 0
 #define MOD_AMT_0 1
 #define WAVE_SEL_0 2
@@ -29,6 +30,7 @@ Add 8 to increment param address to next voice.
 #define VCF_CV_0 6
 #define VCA_CV_0 7
 
+#include "usbMIDI_omni.h"
 #include <Arduino.h>
 #include <Audio.h>
 #include <Wire.h>
@@ -39,21 +41,9 @@ Add 8 to increment param address to next voice.
 
 #define AUDIO_SAMPLE_RATE_EXACT 1600.0f //far less than audio sample rate is required. 
 #define CV_UPDATE_PERIOD 10 //ms
-// testing right-justified DAC
-// GUItool: begin automatically generated code
-AudioSynthWaveformDc     dcZero;        // zero constant for left audio chan
-AudioSynthWaveformDc     CVdc;            // CV for right audio chan; Range -1 : 1
-AudioInputAnalog         adc1(A5); 
-AudioAnalyzeNoteFrequency notefreq1;
-AudioOutputI2S2          i2s2_1;         
-AudioConnection          patchCord1(dcZero, 0, i2s2_1, 0);
-AudioConnection          patchCord2(adc1, notefreq1);
-AudioConnection          patchCord3(CVdc, 0, i2s2_1, 1);
-// GUItool: end automatically generated code
+
 
 typedef double CV_ARRAY_4VOICE[32]; //Stores DAC values to write
-
-
 
 class AnalogSynth_omni {
 
@@ -61,57 +51,27 @@ class AnalogSynth_omni {
         AnalogSynth_omni();
         void setup();
         void tuneOscillators();
-        void writeCV(byte CVnum, const CV_ARRAY_4VOICE *P);
-    private: 
+        void writeCV(byte, const CV_ARRAY_4VOICE *);
+        // void noteOn(midi_message, std::vector<midi_message> *);
+        // void noteOff(midi_message, std::vector<midi_message> *);
+         void updateEnvelopes();
+    private:
+        CV_ARRAY_4VOICE myCvTable; 
 };
 
-AnalogSynth_omni::AnalogSynth_omni() {
-    return;
-}
-
-void AnalogSynth_omni::setup()
-{
-    CVdc.amplitude(0);
-    dcZero.amplitude(0);
-    pinMode(DAC_RSTB, OUTPUT);
-    digitalWrite(DAC_RSTB, 1);
-    pinMode(DAC_BPB, OUTPUT);
-    digitalWrite(DAC_BPB, 1);
-    pinMode(DAC_MUTEB, OUTPUT);
-    digitalWrite(DAC_MUTEB, 1); //disable mute
-    pinMode(DAC_OSR1, OUTPUT);
-    digitalWrite(DAC_OSR1, 1); //osr = 16. adjustable
-    pinMode(DAC_OSR2, OUTPUT);
-    digitalWrite(DAC_OSR2, 1);
-    
-    pinMode(MUX_INHIB, OUTPUT);
-    digitalWrite(MUX_INHIB, HIGH);
-    pinMode(MUX_A0, OUTPUT);
-    pinMode(MUX_B0, OUTPUT);
-    pinMode(MUX_C0, OUTPUT);
-    pinMode(MUX_A1, OUTPUT);
-    pinMode(MUX_B1, OUTPUT);
-    
-}
+//  ISR(TIMER0_OVF_vect)
+// {
+//     /* Timer 0 overflow */
+// }
 
 
-void AnalogSynth_omni::tuneOscillators()
-{
-
-}
-
-/*
-Write Control Voltage to a specific AS3394 CV Channel
-*/
-void AnalogSynth_omni::writeCV(byte CVnum, const CV_ARRAY_4VOICE *P)
-{
-    digitalWrite(MUX_INHIB, HIGH); //Disable all MUX channels
-    digitalWrite(MUX_A0, CVnum & 0x01);
-    digitalWrite(MUX_B0, (CVnum >> 1) & 0x01);
-    digitalWrite(MUX_C0, (CVnum >> 2) & 0x01);
-    digitalWrite(MUX_A1, (CVnum >> 3) & 0x01);
-    digitalWrite(MUX_B1, (CVnum >> 4) & 0x01);
-    CVdc.amplitude(*P[CVnum]);
-    digitalWrite(MUX_INHIB, LOW); //Enable MUX chan
-}
+// bool AnalogSynth_omni::update_setup(void)
+// {
+// 	if (update_scheduled) return false;
+// 	attachInterruptVector(IRQ_SOFTWARE, software_isr);
+// 	NVIC_SET_PRIORITY(IRQ_SOFTWARE, 208); // 255 = lowest priority
+// 	NVIC_ENABLE_IRQ(IRQ_SOFTWARE);
+// 	update_scheduled = true;
+// 	return true;
+// }
 #endif
