@@ -33,6 +33,12 @@
         "cinttypes": "cpp",
         "utility": "cpp",
         "typeinfo": "cpp",
-        "string": "cpp"
+        "string": "cpp",
+        "chrono": "cpp",
+        "ctime": "cpp",
+        "deque": "cpp",
+        "algorithm": "cpp",
+        "ratio": "cpp",
+        "numeric": "cpp"
     }
 }

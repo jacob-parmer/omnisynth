@@ -1,6 +1,8 @@
 #include "AnalogSynth_omni.h"
 #include "LED_omni.h"
 #include <Encoder.h>
+
+using namespace TeensyTimerTool;
 #define ENCODER_DO_NOT_USE_INTERRUPTS
 
 OmniMIDI thisMidiDevice = OmniMIDI();
@@ -11,8 +13,10 @@ Encoder Knob1(20, 21);
 Encoder Knob2(22, 23);
 Encoder Knob3(0,1);
 uint16_t notesCount = 0;
+
 void setup() {
   myAnalogS.setup();
+
 }
 
 void loop() {

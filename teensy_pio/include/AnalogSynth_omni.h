@@ -29,6 +29,7 @@ Add 8 to increment param address to next voice.
 #define FILT_RES_CV_0 5
 #define VCF_CV_0 6
 #define VCA_CV_0 7
+#define NUM_CVs 32
 
 #include "usbMIDI_omni.h"
 #include <Arduino.h>
@@ -38,13 +39,15 @@ Add 8 to increment param address to next voice.
 #include <SD.h>
 #include <SerialFlash.h>
 #include <array>
+#include <TeensyTimerTool.h>
 
 #define AUDIO_SAMPLE_RATE_EXACT 1600.0f //far less than audio sample rate is required. 
 #define CV_UPDATE_PERIOD 10 //ms
 
 
-typedef double CV_ARRAY_4VOICE[32]; //Stores DAC values to write
-
+typedef double CV_ARRAY_4VOICE[NUM_CVs]; //Stores DAC values to write
+using namespace TeensyTimerTool;
+ 
 class AnalogSynth_omni {
 
     public:
@@ -52,11 +55,13 @@ class AnalogSynth_omni {
         void setup();
         void tuneOscillators();
         void writeCV(byte, const CV_ARRAY_4VOICE *);
-        // void noteOn(midi_message, std::vector<midi_message> *);
-        // void noteOff(midi_message, std::vector<midi_message> *);
-         void updateEnvelopes();
+        void noteOn(midi_message, std::vector<midi_message> *);
+        void noteOff(midi_message, std::vector<midi_message> *);
+        void updateEnvelopes();
     private:
-        CV_ARRAY_4VOICE myCvTable; 
+        static void writeCV_Linear();
+        CV_ARRAY_4VOICE myCvTable;
+        PeriodicTimer update_timer;
 };
 
 //  ISR(TIMER0_OVF_vect)

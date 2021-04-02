@@ -1,5 +1,4 @@
 #include "AnalogSynth_omni.h"
-#include "usbMIDI_omni.h"
 
 // testing right-justified DAC
 // GUItool: begin automatically generated code
@@ -12,13 +11,18 @@ AudioConnection          patchCord1(dcZero, 0, i2s2_1, 0);
 AudioConnection          patchCord2(adc1, notefreq1);
 AudioConnection          patchCord3(CVdc, 0, i2s2_1, 1);
 // GUItool: end automatically generated code
+// PeriodicTimer update_timer(TCK);
 
 AnalogSynth_omni::AnalogSynth_omni() {
+    
+    CV_ARRAY_4VOICE myCvTable {0};
+    AnalogSynth_omni::update_timer.begin(writeCV_Linear, 3200_kHz);   
     return;
 }
 
 void AnalogSynth_omni::setup()
 {
+    
     CVdc.amplitude(0);
     dcZero.amplitude(0);
     pinMode(DAC_RSTB, OUTPUT);
@@ -62,10 +66,14 @@ void AnalogSynth_omni::writeCV(byte CVnum, const CV_ARRAY_4VOICE *P)
     digitalWrite(MUX_INHIB, LOW); //Enable MUX chan
 }
 
-//  void noteOn(midi_message msg, std::vector<midi_message> *notes) {
+ void noteOn(midi_message msg, std::vector<midi_message> *notes) {
 
-//  }
+ }
 
-//  void noteOff(midi_message msg, std::vector<midi_message> *notes) {
+ void noteOff(midi_message msg, std::vector<midi_message> *notes) {
 
-//  }
+ }
+ 
+ void AnalogSynth_omni::writeCV_Linear() {
+     this->writeCV(5, &this->myCvTable);
+ }
