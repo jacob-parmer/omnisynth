@@ -14,6 +14,7 @@ Encoder Knob2(22, 23);
 Encoder Knob3(0,1);
 uint16_t notesCount = 0;
 
+elapsedMillis env1 = 0;
 void setup() {
   myAnalogS.setup();
 

@@ -11,12 +11,12 @@ AudioConnection          patchCord1(dcZero, 0, i2s2_1, 0);
 AudioConnection          patchCord2(adc1, notefreq1);
 AudioConnection          patchCord3(CVdc, 0, i2s2_1, 1);
 // GUItool: end automatically generated code
-// PeriodicTimer update_timer(TCK);
+
 
 AnalogSynth_omni::AnalogSynth_omni() {
     
     CV_ARRAY_4VOICE myCvTable {0};
-    AnalogSynth_omni::update_timer.begin(writeCV_Linear, 3200_kHz);   
+      
     return;
 }
 
@@ -54,7 +54,7 @@ void AnalogSynth_omni::tuneOscillators()
 /*
 Write Control Voltage to a specific AS3394 CV Channel
 */
-void AnalogSynth_omni::writeCV(byte CVnum, const CV_ARRAY_4VOICE *P)
+void AnalogSynth_omni::writeCV(byte CVnum)
 {
     digitalWrite(MUX_INHIB, HIGH); //Disable all MUX channels
     digitalWrite(MUX_A0, CVnum & 0x01);
@@ -62,7 +62,7 @@ void AnalogSynth_omni::writeCV(byte CVnum, const CV_ARRAY_4VOICE *P)
     digitalWrite(MUX_C0, (CVnum >> 2) & 0x01);
     digitalWrite(MUX_A1, (CVnum >> 3) & 0x01);
     digitalWrite(MUX_B1, (CVnum >> 4) & 0x01);
-    CVdc.amplitude(*P[CVnum]);
+    CVdc.amplitude(myCvTable[CVnum]);
     digitalWrite(MUX_INHIB, LOW); //Enable MUX chan
 }
 
@@ -75,5 +75,11 @@ void AnalogSynth_omni::writeCV(byte CVnum, const CV_ARRAY_4VOICE *P)
  }
  
  void AnalogSynth_omni::writeCV_Linear() {
-     this->writeCV(5, &this->myCvTable);
+     writeCV(linearCvNum);
+     linearCvNum++;
+     if (linearCvNum == 32)
+     {
+         linearCvNum = 0;
+     }
+     
  }

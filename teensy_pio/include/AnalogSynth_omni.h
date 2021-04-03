@@ -47,21 +47,21 @@ Add 8 to increment param address to next voice.
 
 typedef double CV_ARRAY_4VOICE[NUM_CVs]; //Stores DAC values to write
 using namespace TeensyTimerTool;
- 
+
 class AnalogSynth_omni {
 
     public:
         AnalogSynth_omni();
         void setup();
         void tuneOscillators();
-        void writeCV(byte, const CV_ARRAY_4VOICE *);
+        void writeCV(byte);
         void noteOn(midi_message, std::vector<midi_message> *);
         void noteOff(midi_message, std::vector<midi_message> *);
         void updateEnvelopes();
     private:
-        static void writeCV_Linear();
+        void writeCV_Linear();
         CV_ARRAY_4VOICE myCvTable;
-        PeriodicTimer update_timer;
+        byte linearCvNum = 0;        
 };
 
 //  ISR(TIMER0_OVF_vect)
