@@ -44,9 +44,7 @@ Add 8 to increment param address to next voice.
 #define AUDIO_SAMPLE_RATE_EXACT 1600.0f //far less than audio sample rate is required. 
 #define CV_UPDATE_PERIOD 10 //ms
 
-
 typedef double CV_ARRAY_4VOICE[NUM_CVs]; //Stores DAC values to write
-using namespace TeensyTimerTool;
 
 class AnalogSynth_omni {
 
@@ -54,14 +52,19 @@ class AnalogSynth_omni {
         AnalogSynth_omni();
         void setup();
         void tuneOscillators();
-        void writeCV(byte);
+        void update();
         void noteOn(midi_message, std::vector<midi_message> *);
         void noteOff(midi_message, std::vector<midi_message> *);
         void updateEnvelopes();
     private:
-        void writeCV_Linear();
+        enum class Upd_Modes {Loop, Envelopes, Pitches, Disabled};
+        void writeCV(byte);
+        void writeCV_All_Loop();
+        void writeCV_Envelopes();
+        bool writeCV_Pitches();
         CV_ARRAY_4VOICE myCvTable;
-        byte linearCvNum = 0;        
+        byte loopCvNum = 0;
+        Upd_Modes updateMode;       
 };
 
 //  ISR(TIMER0_OVF_vect)

@@ -12,17 +12,13 @@ AudioConnection          patchCord2(adc1, notefreq1);
 AudioConnection          patchCord3(CVdc, 0, i2s2_1, 1);
 // GUItool: end automatically generated code
 
-
 AnalogSynth_omni::AnalogSynth_omni() {
-    
     CV_ARRAY_4VOICE myCvTable {0};
-      
+    updateMode = Upd_Modes::Loop;  
     return;
 }
 
-void AnalogSynth_omni::setup()
-{
-    
+void AnalogSynth_omni::setup() {
     CVdc.amplitude(0);
     dcZero.amplitude(0);
     pinMode(DAC_RSTB, OUTPUT);
@@ -46,16 +42,36 @@ void AnalogSynth_omni::setup()
     // elapsedMillis attk1;
 }
 
-void AnalogSynth_omni::tuneOscillators()
-{
+void AnalogSynth_omni::tuneOscillators() {
 
+}
+
+/* writes control voltages according to voices mode
+(polyphonic synth or drumkit modes)
+Call periodically in main */
+void AnalogSynth_omni::update() {
+    switch (updateMode)
+    {
+    case Upd_Modes::Loop:
+        this->writeCV_All_Loop();
+        break;
+    case Upd_Modes::Envelopes:
+        this->writeCV_Envelopes();
+        break;
+    case Upd_Modes::Pitches:
+        this->writeCV_Pitches();
+        break;
+    default:
+        break;
+    }
 }
 
 /*
 Write Control Voltage to a specific AS3394 CV Channel
+points MUXs to channel
+Writes to DAC using DC voltage object CVdc
 */
-void AnalogSynth_omni::writeCV(byte CVnum)
-{
+void AnalogSynth_omni::writeCV(byte CVnum) {
     digitalWrite(MUX_INHIB, HIGH); //Disable all MUX channels
     digitalWrite(MUX_A0, CVnum & 0x01);
     digitalWrite(MUX_B0, (CVnum >> 1) & 0x01);
@@ -65,21 +81,33 @@ void AnalogSynth_omni::writeCV(byte CVnum)
     CVdc.amplitude(myCvTable[CVnum]);
     digitalWrite(MUX_INHIB, LOW); //Enable MUX chan
 }
+ 
+ void AnalogSynth_omni::writeCV_All_Loop() {
+     writeCV(loopCvNum);
+     loopCvNum++;
+     if (loopCvNum == 32)
+     {
+         loopCvNum = 0;
+     }
+     
+ }
 
- void noteOn(midi_message msg, std::vector<midi_message> *notes) {
+
+//Prioritized CV update functions //
+
+//Write enveloped CVs (Voltage Controlled Amp)
+void AnalogSynth_omni::writeCV_Envelopes() {
+
+}
+
+bool AnalogSynth_omni::writeCV_Pitches() {
+
+}
+//Trigger VCA ADSR modulation for input MIDI message
+void noteOn(midi_message msg, std::vector<midi_message> *notes) {
 
  }
 
  void noteOff(midi_message msg, std::vector<midi_message> *notes) {
 
- }
- 
- void AnalogSynth_omni::writeCV_Linear() {
-     writeCV(linearCvNum);
-     linearCvNum++;
-     if (linearCvNum == 32)
-     {
-         linearCvNum = 0;
-     }
-     
  }

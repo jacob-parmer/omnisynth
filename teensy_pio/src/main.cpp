@@ -14,10 +14,15 @@ Encoder Knob2(22, 23);
 Encoder Knob3(0,1);
 uint16_t notesCount = 0;
 
-elapsedMillis env1 = 0;
+void updateAnalog() {
+  myAnalogS.update();
+}
+
+PeriodicTimer t_updateCV;
+
 void setup() {
   myAnalogS.setup();
-
+  t_updateCV.begin(updateAnalog, 3200_Hz);
 }
 
 void loop() {
@@ -33,3 +38,4 @@ void loop() {
   }
   
 }
+
