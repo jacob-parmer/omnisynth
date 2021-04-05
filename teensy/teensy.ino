@@ -14,10 +14,7 @@ void setup() {
 }
 
 void loop() {
-  
     thisMidiDevice.read();
-    thisLEDStrip.getNextLEDState(thisMidiDevice.getNotesOn());
+    thisLEDStrip.setLEDs(thisMidiDevice.getNotesOn());
     thisLEDStrip.show();
-
-    delay(1000);
 }
