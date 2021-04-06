@@ -98,13 +98,7 @@ void OmniLED::BASIC(std::vector<midi_message> notes_on) {
     } else {
 
         int red = int(avgNoteVelocity(notes_on) * 2);
-        for (int i=0; i < leds.numPixels(); i++) {
-
-            Serial.print("Setting LED ");
-            Serial.print(i);
-            Serial.print(" to red value ");
-            Serial.println(red);
-            
+        for (int i=0; i < NUM_LEDS; i++) {
             leds.setPixel(i, red, 0, 0);
         }
     }

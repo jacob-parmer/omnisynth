@@ -79,8 +79,11 @@ void OmniMIDI::omniNoteOn(midi_message msg) {
             Serial.println("Duplicate note detected. Not added to notes_on.");
             return;
         }
+
+	Serial.println(note[KEY_INDEX]);
     }
 
+    Serial.println(msg[KEY_INDEX]);
     this->notes_on.push_back(msg);
 }
 
