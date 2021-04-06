@@ -15,6 +15,7 @@
 #define DAC_MUTEB 7 //ACTIVE LOW MUTE
 #define DAC_OSR1 8 //OVERSAMPLE RATE
 #define DAC_OSR2 9 //OVERSAMPLE RATE
+#define DAC_16BIT 65536
 /*
 CV PARAMETERS DEFINITIONS
 points to the voice zero parameter channels.
@@ -29,6 +30,7 @@ Add 8 to increment param address to next voice.
 #define FILT_RES_CV_0 5
 #define VCF_CV_0 6
 #define VCA_CV_0 7
+#define NUM_VOICES 4
 #define NUM_CVs 32
 
 #include "usbMIDI_omni.h"
@@ -43,7 +45,7 @@ Add 8 to increment param address to next voice.
 
 #define AUDIO_SAMPLE_RATE_EXACT 1600.0f //far less than audio sample rate is required. 
 #define CV_UPDATE_PERIOD 10 //ms
-
+//[voice] [CV number]
 typedef double CV_ARRAY_4VOICE[NUM_CVs]; //Stores DAC values to write
 
 class AnalogSynth_omni {
@@ -59,9 +61,15 @@ class AnalogSynth_omni {
     private:
         enum class Upd_Modes {Loop, Envelopes, Pitches, Disabled};
         void writeCV(byte);
+        void writeCV(byte, float);
         void writeCV_All_Loop();
         void writeCV_Envelopes();
         bool writeCV_Pitches();
+        //MIDI note to pitch (Hz)
+        float midi_toHz[127];
+        
+        //MIDI note to DAC voltage (freq compensation)
+        float midiPitchTable[NUM_VOICES][127];
         CV_ARRAY_4VOICE myCvTable;
         byte loopCvNum = 0;
         Upd_Modes updateMode;       
