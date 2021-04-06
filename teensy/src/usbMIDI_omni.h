@@ -4,8 +4,8 @@
 #include <vector>
 #include <array>
 
-#define NOTE_OFF 0x64
-#define NOTE_ON 0x61
+#define NOTE_OFF 0x81
+#define NOTE_ON 0x91
 #define AFTERTOUCH 0xA1
 #define CONTIN_CONTROL 0xB1
 #define PATCH_CHANGE 0xC1
@@ -47,7 +47,7 @@ void OmniMIDI::read() {
         while ((Serial.available() % MIDI_PACKET_SIZE) != 0) {
             Serial.print("Waiting on rest of midi packet. Size of serial queue: ");
             Serial.println(Serial.available());
-            delay(200);
+            delay(100);
         }; // waits for full MIDI packet to arrive
 
         byte header = Serial.read();
@@ -71,8 +71,17 @@ void OmniMIDI::read() {
 
 void OmniMIDI::omniNoteOn(midi_message msg) {
     Serial.println("Note on detected.");
+
+    // Checks if the note is already on - aka handles duplicates
+    for (std::vector<midi_message>::iterator it = notes_on.begin(); it != notes_on.end(); ++it) {
+        midi_message note = *it;
+        if (note[KEY_INDEX] == msg[KEY_INDEX]) {
+            Serial.println("Duplicate note detected. Not added to notes_on.");
+            return;
+        }
+    }
+
     this->notes_on.push_back(msg);
-    Serial.println(notes_on.size());
 }
 
 void OmniMIDI::omniNoteOff(midi_message msg) {
@@ -99,12 +108,8 @@ float avgNoteVelocity(std::vector<midi_message> notes_on) {
         velocity_sum += note[VELOCITY_INDEX];
     }
 
-    Serial.print("Velocity sum: ");
-    Serial.println(velocity_sum);
     float avg_velocity = velocity_sum / notes_on.size();
-
-     Serial.print("Average velocity: ");
-    Serial.println(avg_velocity);   
+    
     return avg_velocity;
 
 }
