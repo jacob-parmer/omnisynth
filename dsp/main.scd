@@ -4,16 +4,25 @@ author: Omar Barazanji
 date: 1/16/21
 */
 
-// Config and global variables
+// boot server
 s.boot;
 
 Server.default.options.device = "ASIO : ASIO4ALL v2";
 
+// variables for synthDef's.
 ~bend = 8193;
 ~notes = Array.newClear(128);
+
+// variables for OSC parameter control.
 ~notes_on = Array.newClear(32);
 ~notes_on_count = 0;
 ~notes_on_ndx = Array.newClear(128);
+
+// variables for OSC UDP ack system
+~curr_msg_note_on = [];
+~curr_msg_note_off = [];
+~ack_table_note_on = Array.fill(128, {arg i; i=1});
+~ack_table_note_off = Array.fill(128, {arg i; i=1});
 
 // Default patch params
 ~synth = "tone1";
@@ -32,7 +41,7 @@ nil.set(\freq, 880);
 MIDIClient.init;
 MIDIIn.connectAll;
 
-// Connection to OSC
+// Connection to OSC via localhost.
 n = NetAddr.new("127.0.0.1", 7771);
 
 
@@ -44,20 +53,41 @@ n = NetAddr.new("127.0.0.1", 7771);
  */
 o = OSCFunc( {
 
-	// arguments to OSCFunc
+	// arguments to OSCFunc.
 	| msg, time, addr, recvPort |
 	var temp;
-	// post all messages to terminal window
+	// post all messages to terminal window.
 	[msg, time, addr, recvPort].postln;
 
 	case
 
+		// Ack system for noteOn messages (not as important for now).
+	    // {msg[1] == "/noteOn".asSymbol} {
+
+		// 	if (msg[2] == ~curr_msg_note_on[1].asInteger) {
+		// 		if (msg[3] == ~curr_msg_note_on[2].asInteger) {
+		// 			~ack_table_note_on[msg[2].asInteger] = 1;
+		// 		}
+		// 	};
+		// }
+
+		// Ack system for noteOff messages (important to ensure no stuck notes).
+	    {msg[1] == "/noteOff".asSymbol} {
+			if (msg[2] == ~curr_msg_note_off[1].asInteger) {
+				if (msg[3] == ~curr_msg_note_off[2].asInteger) {
+					~ack_table_note_off[msg[2].asInteger] = 1;
+				}
+			};
+		}
+
+		// Synth patch selector.
 		{msg[1] == "synthSel".asSymbol} {
 			~synth = msg[2].asString;
 			~notes = Array.newClear(128);
 	        ~synth.postln;
 		}
 
+		// Parameter adjustment.
 		{msg[1] == "filterSel".asSymbol} {
 			if (msg[2] == "lpf".asSymbol) {
 				~lpf_cutoff = msg[3].asFloat;
@@ -93,10 +123,12 @@ o = OSCFunc( {
 			};
 		}
 
+		// compiles all SynthDef's.
 		{msg[1] == "compile".asSymbol} {
 			msg[2].asString.load;
 		}
 
+		// base case - set synth to default patch.
 		{true} {~synth = "tone1"};
 
 }, '/omni');
@@ -107,8 +139,21 @@ Note on function.
 */
 MIDIdef.noteOn(\noteOnDef, {
 	arg vel, nn, chan, src;
+	var temp;
 	[vel, nn].postln;
-	n.sendMsg("/noteOn", nn, vel);
+	// temp = Array.fill(3, {arg i; i=~curr_msg_note_on[i]}); //previous
+	// ~curr_msg_note_on = ["/noteOn",nn,vel];
+	// if (~ack_table_note_on[nn] == 1,
+	// {
+	// 	~ack_table_note_on[nn] = 0;
+	n.sendMsg("/noteOn",nn,vel);
+	// } , 
+	// {
+	// 	"possible packet drop".postln;
+	// 	// send previous and current
+	// 	n.sendMsg(temp[0],temp[1],temp[2]);
+	// 	n.sendMsg("/noteOn",nn,vel);
+	// });
 	~notes_on.add(nn);
 	~notes_on_ndx[nn] = ~notes_on_count;
 	~notes_on_count = ~notes_on_count + 1;
@@ -135,8 +180,22 @@ Note off function.
 */
 MIDIdef.noteOff(\noteOffDef, {
 	arg vel, nn;
+	var temp;
 	[vel, nn].postln;
-	n.sendMsg("/noteOff", nn, vel);
+
+	// store previous noteOff messsage
+	temp = Array.fill(3, {arg i; i=~curr_msg_note_off[i]});
+	~curr_msg_note_off = ["/noteOff",nn,vel];
+	if (~ack_table_note_off[nn] == 1,
+	{
+		~ack_table_note_off[nn]=0;
+		n.sendMsg("/noteOff",nn,vel);	
+	} , {
+		"possible packet drop".postln;
+		// send previous and current
+		n.sendMsg(temp[0],temp[1],temp[2]);
+		n.sendMsg("/noteOff",nn,vel);
+	});
 	~notes_on_count = ~notes_on_count - 1;
 	~notes_on.removeAt(~notes_on_ndx[nn]);
 	~notes_on_ndx[nn] = nil;

@@ -23,7 +23,7 @@ from pythonosc import udp_client
 from pythonosc import osc_bundle_builder
 from pythonosc import osc_message_builder
 
-# Used for Asynch Rx from SC
+# Used for Async Rx from SC
 from pythonosc.osc_server import AsyncIOOSCUDPServer
 
 import asyncio
@@ -37,17 +37,20 @@ class OmniCollider:
         self.midi_evnt = []
         self.teensy = OmniMidi()
         self.d = dispatcher.Dispatcher()
+        self.note_evnt_hist = dict()
 
     def rx_handler(self, *args):
         event = []
         for x in args:
             event.append(x)
         self.midi_evnt = event
-        self.teensy.send_note(event)
+        if event[0] == "/noteOff":
+            self.teensy.send_note(event)
+            self.transmit("ack", event)
         print(event)
 
     async def loop(self):
-        # roughly 5ms window
+        # sleep time
         for x in range(self.delay):
             await asyncio.sleep(0.001)
 
@@ -79,6 +82,8 @@ class OmniCollider:
 
         if command == "server":
             client.send_message(control, args[0])
+        if command == "ack":
+            client.send_message("/omni", control)
         else:
             control_block = [control]
             for x in args:
