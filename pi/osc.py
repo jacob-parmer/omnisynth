@@ -44,9 +44,9 @@ class OmniCollider:
         for x in args:
             event.append(x)
         self.midi_evnt = event
-        if event[0] == "/noteOff":
+        if event[0] == "/noteOn" or event[0] == "/noteOff":
+            if event[0] == "/noteOff": self.transmit("ack", event)
             self.teensy.send_note(event)
-            self.transmit("ack", event)
         print(event)
 
     async def loop(self):
