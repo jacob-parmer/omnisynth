@@ -10,12 +10,17 @@
 #define MUX_B1 17
 #define MUX_INHIB 18
 
+
+#define DAC_DIN 2
+#define DAC_FSYNC 3
+#define DAC_SCLK 4
 #define DAC_RSTB 5 //ACTIVE LOW RESET
 #define DAC_BPB 6 //ACTIVE LOW BYPASS FILTER
 #define DAC_MUTEB 7 //ACTIVE LOW MUTE
 #define DAC_OSR1 8 //OVERSAMPLE RATE
 #define DAC_OSR2 9 //OVERSAMPLE RATE
 #define DAC_16BIT 65536
+#define BitCLK_MICROS 150
 /*
 CV PARAMETERS DEFINITIONS
 points to the voice zero parameter channels.
@@ -43,10 +48,7 @@ Add 8 to increment param address to next voice.
 #include <array>
 #include <TeensyTimerTool.h>
 
-#define AUDIO_SAMPLE_RATE_EXACT 1600.0f //far less than audio sample rate is required. 
-#define CV_UPDATE_PERIOD 10 //ms
-//[voice] [CV number]
-typedef double CV_ARRAY_4VOICE[NUM_CVs]; //Stores DAC values to write
+typedef short CV_ARRAY_4VOICE[NUM_CVs]; //Stores DAC values to write. two's complement.
 
 class AnalogSynth_omni {
 
@@ -58,36 +60,25 @@ class AnalogSynth_omni {
         void noteOn(midi_message, std::vector<midi_message> *);
         void noteOff(midi_message, std::vector<midi_message> *);
         void updateEnvelopes();
-    private:
-        enum class Upd_Modes {Loop, Envelopes, Pitches, Disabled};
-        void writeCV(byte);
-        void writeCV(byte, float);
-        void writeCV_All_Loop();
-        void writeCV_Envelopes();
-        bool writeCV_Pitches();
+        CV_ARRAY_4VOICE myCvTable;
         //MIDI note to pitch (Hz)
         float midi_toHz[127];
         
         //MIDI note to DAC voltage (freq compensation)
         float midiPitchTable[NUM_VOICES][127];
-        CV_ARRAY_4VOICE myCvTable;
+    private:
+        enum class Upd_Modes {Loop, Envelopes, Pitches, Disabled};
+        void setMuxChannel(byte);
+        void writeCV_All_Loop();
+        void writeCV_Envelopes();
+        void writeSpecificCV(byte);
+
+
+        bool sClk = 0;
+        byte c_f_sync = 0;
+        byte c_dacBitCounter = 16;
         byte loopCvNum = 0;
-        Upd_Modes updateMode;       
+        Upd_Modes updateMode;  
+
 };
-
-//  ISR(TIMER0_OVF_vect)
-// {
-//     /* Timer 0 overflow */
-// }
-
-
-// bool AnalogSynth_omni::update_setup(void)
-// {
-// 	if (update_scheduled) return false;
-// 	attachInterruptVector(IRQ_SOFTWARE, software_isr);
-// 	NVIC_SET_PRIORITY(IRQ_SOFTWARE, 208); // 255 = lowest priority
-// 	NVIC_ENABLE_IRQ(IRQ_SOFTWARE);
-// 	update_scheduled = true;
-// 	return true;
-// }
 #endif

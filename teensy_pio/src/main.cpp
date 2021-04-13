@@ -21,21 +21,38 @@ void updateAnalog() {
 PeriodicTimer t_updateCV;
 
 void setup() {
+  Serial.begin(9600);
   myAnalogS.setup();
-  t_updateCV.begin(updateAnalog, 3200_Hz);
+  t_updateCV.begin(updateAnalog, 204_kHz);
+  myAnalogS.myCvTable[VCO_CV_0] = 0;
+  // myAnalogS.myCvTable[WAVE_SEL_0] = -1000;
+  myAnalogS.myCvTable[MIX_BALANCE_CV_0] = -0xFF;
+  // myAnalogS.myCvTable[VCF_CV_0] = -0xFF;
+  myAnalogS.myCvTable[VCA_CV_0] = 32766;
+
+
+
+  //myAnalogS.midiPitchTable[0][69];
+  // myAnalogS.myCvTable[MIX_BALANCE_CV_0] = 60000;
+  // myAnalogS.myCvTable[8+VCA_CV_0] = 1000;
+  // myAnalogS.myCvTable[8+VCO_CV_0] = 60000;
+  // myAnalogS.myCvTable[8+VCF_CV_0] = 10000;
+  // myAnalogS.myCvTable[16+VCA_CV_0] = 1000;
+  // myAnalogS.myCvTable[16+VCO_CV_0] = 60000;
+  // myAnalogS.myCvTable[16+VCF_CV_0] = 10000;
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
-  int Enc0 = Knob0.read();
-  int Enc1 = Knob1.read();
-  thisMidiDevice.read();
-  std::vector<midi_message> notes = thisMidiDevice.getNotesOn();
-  if (notes.size() > notesCount)
-  {
-    notesCount = notes.size();
+  // int Enc0 = Knob0.read();
+  // int Enc1 = Knob1.read();
+  // thisMidiDevice.read();
+  // std::vector<midi_message> notes = thisMidiDevice.getNotesOn();
+  // if (notes.size() > notesCount)
+  // {
+  //   notesCount = notes.size();
     // myAnalogS.noteOn(notes.back(), notes);
-  }
+  // }
   
 }
 

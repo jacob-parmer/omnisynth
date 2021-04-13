@@ -1,19 +1,14 @@
 #include "AnalogSynth_omni.h"
 
-// testing right-justified DAC
 // GUItool: begin automatically generated code
-AudioSynthWaveformDc     dcZero;        // zero constant for left audio chan
-AudioSynthWaveformDc     CVdc;            // CV for right audio chan; Range -1 : 1
 AudioInputAnalog         adc1(A5); 
-AudioAnalyzeNoteFrequency notefreq;
-AudioOutputI2S2          i2s2_1;         
-AudioConnection          patchCord1(dcZero, 0, i2s2_1, 0);
+AudioAnalyzeNoteFrequency notefreq;       
 AudioConnection          patchCord2(adc1, notefreq);
-AudioConnection          patchCord3(CVdc, 0, i2s2_1, 1);
 // GUItool: end automatically generated code
 
 AnalogSynth_omni::AnalogSynth_omni() {
-    //create midi to freq table   
+    //create midi to freq table 
+    AudioMemory(6);
     int a = 440; // a is 440 hz...
     for (int x = 0; x < 127; ++x)
     {
@@ -26,8 +21,9 @@ AnalogSynth_omni::AnalogSynth_omni() {
 
 void AnalogSynth_omni::setup() {
     //configure DAC
-    CVdc.amplitude(0);
-    dcZero.amplitude(0);
+    pinMode(DAC_DIN, OUTPUT);
+    pinMode(DAC_FSYNC, OUTPUT);
+    pinMode(DAC_SCLK, OUTPUT);
     pinMode(DAC_RSTB, OUTPUT);
     digitalWrite(DAC_RSTB, 1);
     pinMode(DAC_BPB, OUTPUT);
@@ -38,23 +34,18 @@ void AnalogSynth_omni::setup() {
     digitalWrite(DAC_OSR1, 1); //osr = 16. adjustable
     pinMode(DAC_OSR2, OUTPUT);
     digitalWrite(DAC_OSR2, 1);
+
     //configure MUX
     pinMode(MUX_INHIB, OUTPUT);
-    digitalWrite(MUX_INHIB, HIGH);
+    // digitalWrite(MUX_INHIB, HIGH);
     pinMode(MUX_A0, OUTPUT);
     pinMode(MUX_B0, OUTPUT);
     pinMode(MUX_C0, OUTPUT);
     pinMode(MUX_A1, OUTPUT);
     pinMode(MUX_B1, OUTPUT);
+
     notefreq.begin(0.25); //certainty
-    //set all CV channels to 0
-    for (size_t cv = 0; cv < 31; ++cv)
-    {
-        this->writeCV(cv);
-        delayMicroseconds(250);
-    }
-    
-    this->tuneOscillators();
+    // this->tuneOscillators();
 }
 
 /* 
@@ -64,23 +55,29 @@ compensates for analog imperfections.
 */
 void AnalogSynth_omni::tuneOscillators() {
     updateMode = Upd_Modes::Disabled; //disable regular CV updating
-    for (size_t v = 0; v < NUM_VOICES; v++) //v = current voice
+    for (size_t v = 0; v < NUM_VOICES; v++)         //v = current voice
     {
 
-        byte CVnum = (++v * (VCO_CV_0+1)) - 1; //convert to pitch channel, range 0-31 
-        for (float d_CV = -1; d_CV < 1; d_CV+=(2/DAC_16BIT))
+        byte CvNum = (++v * (VCO_CV_0+1)) - 1; //convert to pitch channel, range 0-31 
+        for (uint16_t i_CV = 0; i_CV < DAC_16BIT; i_CV += 1)
         {
-            this->writeCV(CVnum, d_CV);
-            delayMicroseconds(50);
+            myCvTable[v*8 + VCO_CV_0] = i_CV;
+            this->setMuxChannel(CvNum);
+            for (size_t i = 0; i < 32; i++)
+            {
+                this->writeSpecificCV(CvNum);
+                delayMicroseconds(BitCLK_MICROS);
+            }
             if (notefreq.available())
             {
                 float vco_fundamental = notefreq.read();
-                for (size_t n = 0; n < 126; ++n) //n = note
+                for (size_t n = 0; n < 126; ++n)        //n = note
                 {
-                    if (vco_fundamental >= midi_toHz[n] && vco_fundamental < midi_toHz[n+1])
+                    if ((vco_fundamental >= midi_toHz[n]) && (vco_fundamental < midi_toHz[n+1]))
                     {
-                        int diff = vco_fundamental - midi_toHz[n];
-                        midiPitchTable[v][n] = d_CV;
+                        // int diff = vco_fundamental - midi_toHz[n];
+                        //[voice][note]
+                        midiPitchTable[v][n] = i_CV;
                     }
                     
                 }
@@ -107,7 +104,7 @@ void AnalogSynth_omni::update() {
         this->writeCV_Envelopes();
         break;
     case Upd_Modes::Pitches:
-        this->writeCV_Pitches();
+        this->writeSpecificCV(32);
         break;
     default:
         break;
@@ -115,42 +112,56 @@ void AnalogSynth_omni::update() {
 }
 
 /*
-Write Control Voltage to a specific AS3394 CV Channel
-points MUXs to channel
-Writes to DAC using DC voltage object CVdc
+points MUXs to  to a specific AS3394 CV Channel
 */
-void AnalogSynth_omni::writeCV(byte CVnum) {
-    
-    digitalWrite(MUX_INHIB, HIGH); //Disable all MUX channels
-    digitalWrite(MUX_A0, CVnum & 0x01);
-    digitalWrite(MUX_B0, (CVnum >> 1) & 0x01);
-    digitalWrite(MUX_C0, (CVnum >> 2) & 0x01);
-    digitalWrite(MUX_A1, (CVnum >> 3) & 0x01);
-    digitalWrite(MUX_B1, (CVnum >> 4) & 0x01);
-    CVdc.amplitude(myCvTable[CVnum]);
-    digitalWrite(MUX_INHIB, LOW); //Enable MUX chan
-}
-
-void AnalogSynth_omni::writeCV(byte CVnum, float d_CV) {
-    digitalWrite(MUX_INHIB, HIGH); //Disable all MUX channels
-    digitalWrite(MUX_A0, CVnum & 0x01);
-    digitalWrite(MUX_B0, (CVnum >> 1) & 0x01);
-    digitalWrite(MUX_C0, (CVnum >> 2) & 0x01);
-    digitalWrite(MUX_A1, (CVnum >> 3) & 0x01);
-    digitalWrite(MUX_B1, (CVnum >> 4) & 0x01);
-    CVdc.amplitude(d_CV);
-    digitalWrite(MUX_INHIB, LOW); //Enable MUX chan
+void AnalogSynth_omni::setMuxChannel(byte CvNum) {
+    // digitalWrite(MUX_INHIB, HIGH); //Disable all MUX channels
+    digitalWrite(MUX_A0, CvNum & 0x01);
+    digitalWrite(MUX_B0, (CvNum >> 1) & 0x01);
+    digitalWrite(MUX_C0, (CvNum >> 2) & 0x01);
+    digitalWrite(MUX_A1, (CvNum >> 3) & 0x01);
+    digitalWrite(MUX_B1, (CvNum >> 4) & 0x01);
+    // digitalWrite(MUX_INHIB, LOW); //Enable MUX chan
 }
  
- void AnalogSynth_omni::writeCV_All_Loop() {
-     writeCV(loopCvNum);
-     loopCvNum++;
-     if (loopCvNum == 32)
-     {
-         loopCvNum = 0;
-     }
+void AnalogSynth_omni::writeCV_All_Loop() {
+    sClk ^=1;
+    digitalWrite(DAC_SCLK, sClk);
+    // Serial.println("wrote clock");
+    c_f_sync++;
+    // uint16_t dac_data = myCvTable[loopCvNum];
+    if (!sClk) //rising edge
+    {
+        if (c_dacBitCounter == 0) {c_dacBitCounter = 16;}
+        c_dacBitCounter--;
+        bool dac_bit = ((myCvTable[loopCvNum] >> c_dacBitCounter) & 0x01 );
+        digitalWrite(DAC_DIN, dac_bit);
+        // if (myCvTable[loopCvNum] != 0)
+        // {
+        //     Serial.print(loopCvNum);
+        //     Serial.print("\t");
+        //     Serial.print(myCvTable[loopCvNum]);
+        //     Serial.print("\t");
+        //     Serial.print(dac_bit);
+        //     Serial.print("\t");
+        //     Serial.print(c_dacBitCounter);
+        //     Serial.print("\n\n");
+        // }      
+    }
+    
+    if (c_f_sync >= 32) {
+        digitalWrite(DAC_FSYNC, HIGH);
+        // delayMicroseconds(1);
+        // Serial.println("wrote f_sync");
+        loopCvNum++;
+        if (loopCvNum == 32) { loopCvNum = 0; }
+        
+        digitalWrite(DAC_FSYNC, LOW);
+        c_f_sync = 0;
+        setMuxChannel(loopCvNum);
+    }
      
- }
+}
 
 
 //Prioritized CV update functions //
@@ -160,8 +171,23 @@ void AnalogSynth_omni::writeCV_Envelopes() {
 
 }
 
-bool AnalogSynth_omni::writeCV_Pitches() {
-
+void AnalogSynth_omni::writeSpecificCV(byte CvNum) {
+    sClk ^=1;
+    digitalWrite(DAC_SCLK, sClk);
+    c_f_sync++;
+    // uint16_t dac_data = myCvTable[loopCvNum];
+    if (sClk)
+    {
+        bool dac_bit = ((myCvTable[CvNum] << (c_f_sync << 1)) & 1<<15 ) >> 15;
+        digitalWrite(DAC_DIN, dac_bit);
+        // Serial.println(myCvTable[loopCvNum]);
+    }
+    
+    if (c_f_sync > 31) {
+        digitalWrite(DAC_FSYNC, HIGH);       
+        digitalWrite(DAC_FSYNC, LOW);
+        c_f_sync = 0;
+    }
 }
 //Trigger VCA ADSR modulation for input MIDI message
 void noteOn(midi_message msg, std::vector<midi_message> *notes) {
