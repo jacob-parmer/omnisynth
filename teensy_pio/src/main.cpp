@@ -24,11 +24,11 @@ void setup() {
   Serial.begin(9600);
   myAnalogS.setup();
   t_updateCV.begin(updateAnalog, 204_kHz);
-  myAnalogS.myCvTable[VCO_CV_0] = 0;
+  myAnalogS.myCvTable[VCO_CV_0] = 32700;
   // myAnalogS.myCvTable[WAVE_SEL_0] = -1000;
   myAnalogS.myCvTable[MIX_BALANCE_CV_0] = -0xFF;
   // myAnalogS.myCvTable[VCF_CV_0] = -0xFF;
-  myAnalogS.myCvTable[VCA_CV_0] = 32766;
+  myAnalogS.myCvTable[VCA_CV_0] = -32000;
 
 
 

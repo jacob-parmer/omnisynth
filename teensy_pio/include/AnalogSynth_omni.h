@@ -74,7 +74,7 @@ class AnalogSynth_omni {
         void writeSpecificCV(byte);
 
 
-        bool sClk = 0;
+        bool sClk = 1;
         byte c_f_sync = 0;
         byte c_dacBitCounter = 16;
         byte loopCvNum = 0;
