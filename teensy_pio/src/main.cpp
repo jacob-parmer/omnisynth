@@ -24,7 +24,7 @@ void setup() {
   Serial.begin(9600);
   myAnalogS.setup();
   t_updateCV.begin(updateAnalog, 2_kHz);
-  myAnalogS.myCvTable[VCO_CV_0] = 32700;
+  myAnalogS.myCvTable[VCO_CV_0] = DAC_FULLSCALE/4;
   // myAnalogS.myCvTable[WAVE_SEL_0] = -1000;
   myAnalogS.myCvTable[MIX_BALANCE_CV_0] = DAC_FULLSCALE;
   // myAnalogS.myCvTable[VCF_CV_0] = -0xFF;

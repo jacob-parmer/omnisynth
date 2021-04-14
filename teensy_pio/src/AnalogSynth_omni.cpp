@@ -116,32 +116,36 @@ points MUXs to  to a specific AS3394 CV Channel
 */
 void AnalogSynth_omni::setMuxChannel(byte CvNum) {
     // digitalWrite(MUX_INHIB, HIGH); //Disable all MUX channels
-    digitalWrite(MUX_A0, CvNum & 0x01);
-    digitalWrite(MUX_B0, (CvNum >> 1) & 0x01);
-    digitalWrite(MUX_C0, (CvNum >> 2) & 0x01);
-    digitalWrite(MUX_A1, (CvNum >> 3) & 0x01);
-    digitalWrite(MUX_B1, (CvNum >> 4) & 0x01);
+    digitalWrite(MUX_A0, (CvNum & 0x01));
+    digitalWrite(MUX_B0, ((CvNum >> 1) & 0x01));
+    digitalWrite(MUX_C0, ((CvNum >> 2) & 0x01));
+    digitalWrite(MUX_A1, ((CvNum >> 3) & 0x01));
+    digitalWrite(MUX_B1, ((CvNum >> 4) & 0x01));
     // digitalWrite(MUX_INHIB, LOW); //Enable MUX chan
 }
  
 void AnalogSynth_omni::writeCV_All_Loop() {
-    sClk ^=1;
-    digitalWrite(DAC_SCLK, sClk);
-    // Serial.println("wrote clock");
     c_f_sync++;
         if (c_f_sync >= 32 && sClk) {
         digitalWrite(DAC_FSYNC, HIGH);
-        // delayMicroseconds(1);
+        // delayMicroseconds(1); //causing ugly discontinuity
         // Serial.println("wrote f_sync");
-        
-        
-        // delayMicroseconds(1);
         digitalWrite(DAC_FSYNC, LOW);
         c_f_sync = 0;
-        setMuxChannel(loopCvNum);
+        // delayMicroseconds(1);
+        int muxChannel = loopCvNum -1;
+        if (muxChannel == -1) {muxChannel = 31;}
+        setMuxChannel(muxChannel);
         loopCvNum++;
         if (loopCvNum == 32) {loopCvNum = 0;}        
         }
+    // if (c_f_sync == 1)
+    // {
+    //     setMuxChannel(loopCvNum);
+    // }
+    sClk ^=1;
+    digitalWrite(DAC_SCLK, sClk);
+    
     if (!sClk) //falling edge
     {
         short dac_word = myCvTable[loopCvNum];
