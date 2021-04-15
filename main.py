@@ -61,6 +61,9 @@ class Omni():
         # LUT for adsr control messages, maps 0-127 to .001 - 1 (seconds or amplitude).
         self.cc_to_adsr = np.linspace(0.001, 1, 128).tolist()
 
+        # For GUI
+        self.mapMode = False
+
     def value_map(self, filt, inp):
         value = inp
         if filt == "lpf" or filt == "hpf":

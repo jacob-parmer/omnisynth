@@ -154,7 +154,7 @@ class slideButton(Button):
     def on_touch_down(self, touch):
         if self.collide_point(*touch.pos):
             self.background_color = [0, 85, 255, 1]
-            if mapMode:
+            if OmniSynth.mapMode:
                 if len(OmniSynth.knob_table) != 0:
                     with self.canvas:
                         self.opacity = 1
@@ -170,7 +170,6 @@ class slideButton(Button):
 class KnobValPage(MyScreens):
     def on_pre_enter(self):
         slideList = []
-        self.mapMode = False
 
         layout = BoxLayout(orientation='horizontal', size_hint_y = 0.75, pos_hint = {'x':0, 'y':0.25})
 
@@ -241,16 +240,16 @@ class KnobValPage(MyScreens):
     def on_enter(self):
         self.slideEvent = Clock.schedule_interval(self.slideUpdate, 1/60)
         OmniSynth.midi_learn_on = True
-        self.mapMode = False
+        OmniSynth.mapMode = False
     def on_pre_leave(self):
         self.slideEvent.cancel()
         OmniSynth.midi_learn_on = False
-        self.mapMode = False
+        OmniSynth.mapMode = False
     def learnMidi(self):
-        if self.mapMode:
-            self.mapMode = False
+        if OmniSynth.mapMode:
+            OmniSynth.mapMode = False
         else:
-            self.mapMode = True
+            OmniSynth.mapMode = True
 
 class OmniGui(ScreenManager):
     def __init__(self, **kwargs):
