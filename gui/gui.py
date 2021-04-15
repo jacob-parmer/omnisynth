@@ -41,6 +41,7 @@ from kivy.core.window import Window
 # Window.show_cursor = False
 
 knobCoords = dict()
+mapMode = False
 
 #Creating very simple plot
 plt.plot([1, 23, 2, 4])
@@ -154,7 +155,7 @@ class slideButton(Button):
     def on_touch_down(self, touch):
         if self.collide_point(*touch.pos):
             self.background_color = [0, 85, 255, 1]
-            if OmniSynth.midi_learn_on:
+            if mapMode:
                 if len(OmniSynth.knob_table) != 0:
                     with self.canvas:
                         self.opacity = 1
@@ -239,13 +240,17 @@ class KnobValPage(MyScreens):
                     x.value_normalized = ( OmniSynth.knob_table[knobCoords[x.slider_name]] / 127 )
     def on_enter(self):
         self.slideEvent = Clock.schedule_interval(self.slideUpdate, 1/60)
+        OmniSynth.midi_learn_on = True
+        mapMode = False
     def on_pre_leave(self):
         self.slideEvent.cancel()
+        OmniSynth.midi_learn_on = False
+        mapMode = False
     def learnMidi(self):
-        if OmniSynth.midi_learn_on:
-            OmniSynth.midi_learn_on = False
+        if mapMode:
+            mapMode = False
         else:
-            OmniSynth.midi_learn_on = True
+            mapMode = True
 
 class OmniGui(ScreenManager):
     def __init__(self, **kwargs):
