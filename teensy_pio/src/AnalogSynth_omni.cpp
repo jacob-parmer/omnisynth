@@ -31,7 +31,7 @@ void AnalogSynth_omni::setup() {
     pinMode(DAC_MUTEB, OUTPUT);
     digitalWrite(DAC_MUTEB, 1); //disable mute
     pinMode(DAC_OSR1, OUTPUT);
-    digitalWrite(DAC_OSR1, 1); //osr = 16. adjustable
+    digitalWrite(DAC_OSR1, 0); //osr = 16. adjustable
     pinMode(DAC_OSR2, OUTPUT);
     digitalWrite(DAC_OSR2, 1);
 
@@ -59,7 +59,7 @@ void AnalogSynth_omni::tuneOscillators() {
     {
 
         byte CvNum = (++v * (VCO_CV_0+1)) - 1; //convert to pitch channel, range 0-31 
-        for (uint16_t i_CV = 0; i_CV < DAC_16BIT; i_CV += 1)
+        for (uint16_t i_CV = -DAC_FULLSCALE; i_CV < DAC_FULLSCALE; i_CV += 1)
         {
             myCvTable[v*8 + VCO_CV_0] = i_CV;
             this->setMuxChannel(CvNum);
@@ -116,25 +116,42 @@ points MUXs to  to a specific AS3394 CV Channel
 */
 void AnalogSynth_omni::setMuxChannel(byte CvNum) {
     // digitalWrite(MUX_INHIB, HIGH); //Disable all MUX channels
-    digitalWrite(MUX_A0, CvNum & 0x01);
-    digitalWrite(MUX_B0, (CvNum >> 1) & 0x01);
-    digitalWrite(MUX_C0, (CvNum >> 2) & 0x01);
-    digitalWrite(MUX_A1, (CvNum >> 3) & 0x01);
-    digitalWrite(MUX_B1, (CvNum >> 4) & 0x01);
+    digitalWrite(MUX_A0, (CvNum & 0x01));
+    digitalWrite(MUX_B0, ((CvNum >> 1) & 0x01));
+    digitalWrite(MUX_C0, ((CvNum >> 2) & 0x01));
+    digitalWrite(MUX_A1, ((CvNum >> 3) & 0x01));
+    digitalWrite(MUX_B1, ((CvNum >> 4) & 0x01));
     // digitalWrite(MUX_INHIB, LOW); //Enable MUX chan
 }
  
 void AnalogSynth_omni::writeCV_All_Loop() {
+    c_f_sync++;
+        if (c_f_sync >= 32 && sClk) {
+        digitalWrite(DAC_FSYNC, HIGH);
+        // delayMicroseconds(1); //causing ugly discontinuity
+        // Serial.println("wrote f_sync");
+        digitalWrite(DAC_FSYNC, LOW);
+        c_f_sync = 0;
+        // delayMicroseconds(1);
+        int muxChannel = loopCvNum -1;
+        if (muxChannel == -1) {muxChannel = 31;}
+        setMuxChannel(muxChannel);
+        loopCvNum++;
+        if (loopCvNum == 32) {loopCvNum = 0;}        
+        }
+    // if (c_f_sync == 1)
+    // {
+    //     setMuxChannel(loopCvNum);
+    // }
     sClk ^=1;
     digitalWrite(DAC_SCLK, sClk);
-    // Serial.println("wrote clock");
-    c_f_sync++;
-    // uint16_t dac_data = myCvTable[loopCvNum];
-    if (!sClk) //rising edge
+    
+    if (!sClk) //falling edge
     {
+        short dac_word = myCvTable[loopCvNum];
         if (c_dacBitCounter == 0) {c_dacBitCounter = 16;}
         c_dacBitCounter--;
-        bool dac_bit = ((myCvTable[loopCvNum] >> c_dacBitCounter) & 0x01 );
+        bool dac_bit = ((dac_word >> c_dacBitCounter) & 0x01 );
         digitalWrite(DAC_DIN, dac_bit);
         // if (myCvTable[loopCvNum] != 0)
         // {
@@ -148,21 +165,9 @@ void AnalogSynth_omni::writeCV_All_Loop() {
         //     Serial.print("\n\n");
         // }      
     }
-    
-    if (c_f_sync >= 32) {
-        digitalWrite(DAC_FSYNC, HIGH);
-        // delayMicroseconds(1);
-        // Serial.println("wrote f_sync");
-        loopCvNum++;
-        if (loopCvNum == 32) { loopCvNum = 0; }
-        
-        digitalWrite(DAC_FSYNC, LOW);
-        c_f_sync = 0;
-        setMuxChannel(loopCvNum);
-    }
+
      
 }
-
 
 //Prioritized CV update functions //
 
@@ -175,7 +180,7 @@ void AnalogSynth_omni::writeSpecificCV(byte CvNum) {
     sClk ^=1;
     digitalWrite(DAC_SCLK, sClk);
     c_f_sync++;
-    // uint16_t dac_data = myCvTable[loopCvNum];
+    // uint16_t dac_word = myCvTable[loopCvNum];
     if (sClk)
     {
         bool dac_bit = ((myCvTable[CvNum] << (c_f_sync << 1)) & 1<<15 ) >> 15;
