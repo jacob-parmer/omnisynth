@@ -241,16 +241,16 @@ class KnobValPage(MyScreens):
     def on_enter(self):
         self.slideEvent = Clock.schedule_interval(self.slideUpdate, 1/60)
         OmniSynth.midi_learn_on = True
-        mapMode = False
+        self.mapMode = False
     def on_pre_leave(self):
         self.slideEvent.cancel()
         OmniSynth.midi_learn_on = False
-        mapMode = False
+        self.mapMode = False
     def learnMidi(self):
-        if mapMode:
-            mapMode = False
+        if self.mapMode:
+            self.mapMode = False
         else:
-            mapMode = True
+            self.mapMode = True
 
 class OmniGui(ScreenManager):
     def __init__(self, **kwargs):
