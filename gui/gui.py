@@ -41,7 +41,6 @@ from kivy.core.window import Window
 # Window.show_cursor = False
 
 knobCoords = dict()
-mapMode = False
 
 #Creating very simple plot
 plt.plot([1, 23, 2, 4])
@@ -171,6 +170,7 @@ class slideButton(Button):
 class KnobValPage(MyScreens):
     def on_pre_enter(self):
         slideList = []
+        self.mapMode = False
 
         layout = BoxLayout(orientation='horizontal', size_hint_y = 0.75, pos_hint = {'x':0, 'y':0.25})
 
