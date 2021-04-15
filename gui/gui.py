@@ -37,8 +37,8 @@ from main import Omni
 OmniSynth = Omni()
 
 from kivy.core.window import Window
-Window.fullscreen = 'auto'
-Window.show_cursor = False
+# Window.fullscreen = 'auto'
+# Window.show_cursor = False
 
 knobCoords = dict()
 
@@ -224,6 +224,9 @@ class KnobValPage(MyScreens):
         self.add_widget(layout)
    #     self.add_widget(lpf_button)
    #     self.add_widget(hpf_slider)
+        slideEvent = Clock.schedule_interval(mySlider.slideUpdate, 1/60)
+    def on_pre_leave(self):
+        slideEvent.cancel()
     def learnMidi(self):
         if OmniSynth.midi_learn_on:
             OmniSynth.midi_learn_on = False
@@ -243,7 +246,6 @@ class OmniApp(App):
         global sm
         sm = OmniGui(transition=NoTransition())
         event = Clock.schedule_interval(OmniSynth.open_stream, .001)
-        slideEvent = Clock.schedule_interval(mySlider.slideUpdate, 1/60)
         return sm
 
 if __name__ == "__main__":
