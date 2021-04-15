@@ -143,8 +143,7 @@ class mySlider(Slider):
         self.slider_name = name
         super(mySlider, self).__init__(**kwargs)
 #        self.disabled = True
-    def slideUpdate(self):
-        self.value_normalized = ( OmniSynth.knob_table[knobCoords[self.slider_name]] / 127 )
+    
 #        with self.canvas:
 #             self.opacity = 0.5
 
@@ -170,6 +169,8 @@ class slideButton(Button):
 
 class KnobValPage(MyScreens):
     def on_pre_enter(self):
+        slideList = []
+
         layout = BoxLayout(orientation='horizontal', size_hint_y = 0.75, pos_hint = {'x':0, 'y':0.25})
 
         lpf_layout = BoxLayout(orientation='vertical', size_hint_x = 0.15, spacing = 25, padding = 25)
@@ -221,12 +222,25 @@ class KnobValPage(MyScreens):
         layout.add_widget(sustain_layout)
         layout.add_widget(release_layout)
 
+        slideList.append(lpf_slider)
+        slideList.append(hpf_slider)
+        slideList.append(attack_slider)
+        slideList.append(decay_slider)
+        slideList.append(sustain_slider)
+        slideList.append(release_slider)
+        self.slideList = slideList
+
         self.add_widget(layout)
    #     self.add_widget(lpf_button)
    #     self.add_widget(hpf_slider)
-        slideEvent = Clock.schedule_interval(mySlider.slideUpdate, 1/60)
+    def slideUpdate(self, *kwargs):
+        if not len(OmniSynth.knob_map) == 0:
+            for x in self.slideList:
+                x.value_normalized = ( OmniSynth.knob_table[knobCoords[x.slider_name]] / 127 )
+    def on_enter(self):
+        self.slideEvent = Clock.schedule_interval(self.slideUpdate, 1/60)
     def on_pre_leave(self):
-        slideEvent.cancel()
+        self.slideEvent.cancel()
     def learnMidi(self):
         if OmniSynth.midi_learn_on:
             OmniSynth.midi_learn_on = False
