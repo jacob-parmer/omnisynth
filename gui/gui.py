@@ -142,6 +142,11 @@ class mySlider(Slider):
     def __init__(self, name, **kwargs):
         self.slider_name = name
         super(mySlider, self).__init__(**kwargs)
+#        self.disabled = True
+    def slideUpdate(self):
+        self.value_normalized = ( OmniSynth.knob_table[knobCoords[self.slider_name]] / 127 )
+#        with self.canvas:
+#             self.opacity = 0.5
 
 class slideButton(Button):
     def __init__(self, name, **kwargs):
@@ -169,42 +174,42 @@ class KnobValPage(MyScreens):
 
         lpf_layout = BoxLayout(orientation='vertical', size_hint_x = 0.15, spacing = 25, padding = 25)
         lpf_slider = mySlider('lpf', cursor_image = 'sliderV3.png', orientation = 'vertical', size_hint_y = 0.75,
-                                size_hint_x = 0.1, pos_hint = {'x':0.5, 'y': 0.25})
+                                size_hint_x = 0.15, pos_hint = {'x':0.5, 'y': 0.25})
         lpf_button = slideButton('lpf', text = 'lpf', size_hint_x = 0.75, size_hint_y = 0.1, pos_hint = {'x':0.17, 'y':0})
         lpf_layout.add_widget(lpf_slider)
         lpf_layout.add_widget(lpf_button)
 
         hpf_layout = BoxLayout(orientation='vertical', size_hint_x = 0.15, spacing = 25, padding = 25)
         hpf_slider = mySlider('hpf', cursor_image = 'sliderV3.png', orientation = 'vertical', size_hint_y = 0.75,
-                                size_hint_x = 0.1, pos_hint = {'x':0.5, 'y': 0.25})
+                                size_hint_x = 0.15, pos_hint = {'x':0.5, 'y': 0.25})
         hpf_button = slideButton('hpf', text = 'hpf', size_hint_x = 0.75, size_hint_y = 0.1, pos_hint = {'x':0.17, 'y':0})
         hpf_layout.add_widget(hpf_slider)
         hpf_layout.add_widget(hpf_button)
 
         attack_layout = BoxLayout(orientation='vertical', size_hint_x = 0.15, spacing = 25, padding = 25)
         attack_slider = mySlider('attack', cursor_image = 'sliderV3.png', orientation = 'vertical', size_hint_y = 0.75,
-                                size_hint_x = 0.1, pos_hint = {'x':0.5, 'y': 0.25})
+                                size_hint_x = 0.15, pos_hint = {'x':0.5, 'y': 0.25})
         attack_button = slideButton('attack', text = 'attack', size_hint_x = 0.75, size_hint_y = 0.1, pos_hint = {'x':0.17, 'y':0})
         attack_layout.add_widget(attack_slider)
         attack_layout.add_widget(attack_button)
 
         decay_layout = BoxLayout(orientation='vertical', size_hint_x = 0.15, spacing = 25, padding = 25)
         decay_slider = mySlider('decay', cursor_image = 'sliderV3.png', orientation = 'vertical', size_hint_y = 0.75,
-                                size_hint_x = 0.1, pos_hint = {'x':0.5, 'y': 0.25})
+                                size_hint_x = 0.15, pos_hint = {'x':0.5, 'y': 0.25})
         decay_button = slideButton('decay', text = 'decay', size_hint_x = 0.75, size_hint_y = 0.1, pos_hint = {'x':0.17, 'y':0})
         decay_layout.add_widget(decay_slider)
         decay_layout.add_widget(decay_button)
 
         sustain_layout = BoxLayout(orientation='vertical', size_hint_x = 0.15, spacing = 25, padding = 25)
         sustain_slider = mySlider('sustain', cursor_image = 'sliderV3.png', orientation = 'vertical', size_hint_y = 0.75,
-                                size_hint_x = 0.1, pos_hint = {'x':0.5, 'y': 0.25})
+                                size_hint_x = 0.15, pos_hint = {'x':0.5, 'y': 0.25})
         sustain_button = slideButton('sustain', text = 'sustain', size_hint_x = 0.75, size_hint_y = 0.1, pos_hint = {'x':0.17, 'y':0})
         sustain_layout.add_widget(sustain_slider)
         sustain_layout.add_widget(sustain_button)
 
         release_layout = BoxLayout(orientation='vertical', size_hint_x = 0.15, spacing = 25, padding = 25)
         release_slider = mySlider('release', cursor_image = 'sliderV3.png', orientation = 'vertical', size_hint_y = 0.75,
-                                size_hint_x = 0.1, pos_hint = {'x':0.5, 'y': 0.25})
+                                size_hint_x = 0.15, pos_hint = {'x':0.5, 'y': 0.25})
         release_button = slideButton('release', text = 'release', size_hint_x = 0.75, size_hint_y = 0.1, pos_hint = {'x':0.17, 'y':0})
         release_layout.add_widget(release_slider)
         release_layout.add_widget(release_button)
@@ -231,11 +236,14 @@ class OmniGui(ScreenManager):
         #selecting the Main GUI screen for startup
         self.current = 'MainGUI'
 
+
+
 class OmniApp(App):
     def build(self):
         global sm
         sm = OmniGui(transition=NoTransition())
         event = Clock.schedule_interval(OmniSynth.open_stream, .001)
+        slideEvent = Clock.schedule_interval(mySlider.slideUpdate, 1/60)
         return sm
 
 if __name__ == "__main__":
