@@ -25,6 +25,7 @@ from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.anchorlayout import AnchorLayout
 from kivy.uix.screenmanager import NoTransition
 from kivy.uix.screenmanager import ScreenManager, Screen
+from kivy.uix.slider import Slider
 
 from kivy.garden.matplotlib.backend_kivyagg import FigureCanvasKivyAgg
 import matplotlib.pyplot as plt
@@ -36,8 +37,8 @@ from main import Omni
 OmniSynth = Omni()
 
 from kivy.core.window import Window
-# Window.fullscreen = 'auto'
-# Window.show_cursor = False
+Window.fullscreen = 'auto'
+Window.show_cursor = False
 
 knobCoords = dict()
 
@@ -108,60 +109,116 @@ class MidiLearnPage(MyScreens):
 
 # Extending Image class to associate each knob with a function name
 # And allow midi learn to fully work
-class KnobImage(Image):
-    def __init__(self, name, **kwargs):
-        self.knob_name = name
-        super(KnobImage, self).__init__(**kwargs)
-        with self.canvas:
-            self.opacity = 0.5
-    def on_touch_down(self, touch):
-        if OmniSynth.midi_learn_on:
-            if len(OmniSynth.knob_table) != 0:
-                if self.collide_point(*touch.pos):
-                    self.opacity = 1
+# class KnobImage(Image):
+#     def __init__(self, name, **kwargs):
+#         self.knob_name = name
+#         super(KnobImage, self).__init__(**kwargs)
+#         with self.canvas:
+#             self.opacity = 0.5
+#     def on_touch_down(self, touch):
+#         if OmniSynth.midi_learn_on:
+#             if len(OmniSynth.knob_table) != 0:
+#                 if self.collide_point(*touch.pos):
+#                     self.opacity = 1
 
-class IndicatorImage(Image):
+# class IndicatorImage(Image):
+#     def __init__(self, name, **kwargs):
+#         self.knob_name = name
+#         super(IndicatorImage, self).__init__(**kwargs)
+#         with self.canvas:
+#             self.opacity = 0.5
+#     def on_touch_down(self, touch):
+#         if self.collide_point(*touch.pos):
+#             if OmniSynth.midi_learn_on:
+#                 if len(OmniSynth.knob_table) != 0:
+#                     with self.canvas:
+#                         self.opacity = 1
+#                     src = OmniSynth.control_evnt[2]
+#                     chan = OmniSynth.control_evnt[3]
+#                     knobCoords[self.knob_name] = (src, chan)
+#                     OmniSynth.map_knob((src,chan), self.knob_name)
+
+class mySlider(Slider):
     def __init__(self, name, **kwargs):
-        self.knob_name = name
-        super(IndicatorImage, self).__init__(**kwargs)
-        with self.canvas:
-            self.opacity = 0.5
+        self.slider_name = name
+        super(mySlider, self).__init__(**kwargs)
+
+class slideButton(Button):
+    def __init__(self, name, **kwargs):
+        self.button_name = name
+        super(slideButton, self).__init__(**kwargs)
     def on_touch_down(self, touch):
         if self.collide_point(*touch.pos):
+            self.background_color = [0, 85, 255, 1]
             if OmniSynth.midi_learn_on:
                 if len(OmniSynth.knob_table) != 0:
                     with self.canvas:
                         self.opacity = 1
                     src = OmniSynth.control_evnt[2]
                     chan = OmniSynth.control_evnt[3]
-                    knobCoords[self.knob_name] = (src, chan)
-                    OmniSynth.map_knob((src,chan), self.knob_name)
-
+                    knobCoords[self.button_name] = (src, chan)
+                    OmniSynth.map_knob((src,chan), self.button_name)
+    def on_touch_up(self, touch):
+        if self.collide_point(*touch.pos):
+            self.background_color = [1, 1, 1, 1]
 
 
 class KnobValPage(MyScreens):
     def on_pre_enter(self):
-        lpf_label = Label(text='LPF', pos_hint={'x':0.25, 'y':0.7})
-        lpf_knob = KnobImage('lpf',source='knobV1.png', 
-                            size_hint_x=0.25, size_hint_y=0.25,
-                            pos_hint={'x':0.025, 'y':0.7})
-        lpf_indicator = IndicatorImage('lpf', source='indicator.png',
-                            size_hint_x=0.25, size_hint_y=0.25,
-                            pos_hint={'x':0.024, 'y':0.7})
+        layout = BoxLayout(orientation='horizontal', size_hint_y = 0.75, pos_hint = {'x':0, 'y':0.25})
 
-        hpf_label = Label(text="HPF", color=[105, 106, 188, 1],font_size=60, pos_hint={'x':0.225, 'y':0.7})
-        hpf_knob = KnobImage('hpf', source='knobV1.png',
-                            size_hint_x=0.25, size_hint_y=0.25,
-                            pos_hint={'x':0.225, 'y':0.7})
-        hpf_indicator = IndicatorImage('hpf', source='indicator.png',
-                            size_hint_x=0.25, size_hint_y=0.25,
-                            pos_hint={'x':0.224, 'y':0.7})
-        self.add_widget(lpf_label)
-        self.add_widget(lpf_knob)
-        self.add_widget(lpf_indicator)
-        self.add_widget(hpf_knob)
-        self.add_widget(hpf_indicator)
-        self.add_widget(hpf_label)
+        lpf_layout = BoxLayout(orientation='vertical', size_hint_x = 0.15, spacing = 25, padding = 25)
+        lpf_slider = mySlider('lpf', cursor_image = 'sliderV3.png', orientation = 'vertical', size_hint_y = 0.75,
+                                size_hint_x = 0.1, pos_hint = {'x':0.5, 'y': 0.25})
+        lpf_button = slideButton('lpf', text = 'lpf', size_hint_x = 0.75, size_hint_y = 0.1, pos_hint = {'x':0.17, 'y':0})
+        lpf_layout.add_widget(lpf_slider)
+        lpf_layout.add_widget(lpf_button)
+
+        hpf_layout = BoxLayout(orientation='vertical', size_hint_x = 0.15, spacing = 25, padding = 25)
+        hpf_slider = mySlider('hpf', cursor_image = 'sliderV3.png', orientation = 'vertical', size_hint_y = 0.75,
+                                size_hint_x = 0.1, pos_hint = {'x':0.5, 'y': 0.25})
+        hpf_button = slideButton('hpf', text = 'hpf', size_hint_x = 0.75, size_hint_y = 0.1, pos_hint = {'x':0.17, 'y':0})
+        hpf_layout.add_widget(hpf_slider)
+        hpf_layout.add_widget(hpf_button)
+
+        attack_layout = BoxLayout(orientation='vertical', size_hint_x = 0.15, spacing = 25, padding = 25)
+        attack_slider = mySlider('attack', cursor_image = 'sliderV3.png', orientation = 'vertical', size_hint_y = 0.75,
+                                size_hint_x = 0.1, pos_hint = {'x':0.5, 'y': 0.25})
+        attack_button = slideButton('attack', text = 'attack', size_hint_x = 0.75, size_hint_y = 0.1, pos_hint = {'x':0.17, 'y':0})
+        attack_layout.add_widget(attack_slider)
+        attack_layout.add_widget(attack_button)
+
+        decay_layout = BoxLayout(orientation='vertical', size_hint_x = 0.15, spacing = 25, padding = 25)
+        decay_slider = mySlider('decay', cursor_image = 'sliderV3.png', orientation = 'vertical', size_hint_y = 0.75,
+                                size_hint_x = 0.1, pos_hint = {'x':0.5, 'y': 0.25})
+        decay_button = slideButton('decay', text = 'decay', size_hint_x = 0.75, size_hint_y = 0.1, pos_hint = {'x':0.17, 'y':0})
+        decay_layout.add_widget(decay_slider)
+        decay_layout.add_widget(decay_button)
+
+        sustain_layout = BoxLayout(orientation='vertical', size_hint_x = 0.15, spacing = 25, padding = 25)
+        sustain_slider = mySlider('sustain', cursor_image = 'sliderV3.png', orientation = 'vertical', size_hint_y = 0.75,
+                                size_hint_x = 0.1, pos_hint = {'x':0.5, 'y': 0.25})
+        sustain_button = slideButton('sustain', text = 'sustain', size_hint_x = 0.75, size_hint_y = 0.1, pos_hint = {'x':0.17, 'y':0})
+        sustain_layout.add_widget(sustain_slider)
+        sustain_layout.add_widget(sustain_button)
+
+        release_layout = BoxLayout(orientation='vertical', size_hint_x = 0.15, spacing = 25, padding = 25)
+        release_slider = mySlider('release', cursor_image = 'sliderV3.png', orientation = 'vertical', size_hint_y = 0.75,
+                                size_hint_x = 0.1, pos_hint = {'x':0.5, 'y': 0.25})
+        release_button = slideButton('release', text = 'release', size_hint_x = 0.75, size_hint_y = 0.1, pos_hint = {'x':0.17, 'y':0})
+        release_layout.add_widget(release_slider)
+        release_layout.add_widget(release_button)
+
+        layout.add_widget(lpf_layout)
+        layout.add_widget(hpf_layout)
+        layout.add_widget(attack_layout)
+        layout.add_widget(decay_layout)
+        layout.add_widget(sustain_layout)
+        layout.add_widget(release_layout)
+
+        self.add_widget(layout)
+   #     self.add_widget(lpf_button)
+   #     self.add_widget(hpf_slider)
     def learnMidi(self):
         if OmniSynth.midi_learn_on:
             OmniSynth.midi_learn_on = False
