@@ -523,17 +523,11 @@
         pos_hint: {'x': 0.025, 'y': 0.05}
         on_release: root.screenSel('MainGUI')
     Button:
-        text: 'Quick Map'
+        text: 'Map Mode'
         size_hint_x: 0.1
         size_hint_y: 0.1
         pos_hint: {'x': 0.9, 'y':0}
         on_release: root.learnMidi()
-    Button:
-        text: 'MIDI Learn'
-        size_hint_x: 0.15
-        size_hint_y: 0.15
-        pos_hint: {'x': 0.85, 'y': 0.85}
-        on_release: root.screenSel('MidiLearnPage')
 
 <MidiLearnPage>
     name: 'MidiLearnPage'
