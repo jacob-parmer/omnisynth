@@ -234,9 +234,9 @@ class KnobValPage(MyScreens):
    #     self.add_widget(lpf_button)
    #     self.add_widget(hpf_slider)
     def slideUpdate(self, *kwargs):
-        if not len(OmniSynth.knob_map) == 0:
             for x in self.slideList:
-                x.value_normalized = ( OmniSynth.knob_table[knobCoords[x.slider_name]] / 127 )
+                if x.slider_name in knobCoords:
+                    x.value_normalized = ( OmniSynth.knob_table[knobCoords[x.slider_name]] / 127 )
     def on_enter(self):
         self.slideEvent = Clock.schedule_interval(self.slideUpdate, 1/60)
     def on_pre_leave(self):
