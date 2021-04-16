@@ -33,7 +33,7 @@ void AnalogSynth_omni::setup() {
     pinMode(DAC_OSR1, OUTPUT);
     digitalWrite(DAC_OSR1, 0); //osr = 16. adjustable
     pinMode(DAC_OSR2, OUTPUT);
-    digitalWrite(DAC_OSR2, 1);
+    digitalWrite(DAC_OSR2, 0);
 
     //configure MUX
     pinMode(MUX_INHIB, OUTPUT);
@@ -126,9 +126,9 @@ void AnalogSynth_omni::setMuxChannel(byte CvNum) {
  
 void AnalogSynth_omni::writeCV_All_Loop() {
     c_f_sync++;
-        if (c_f_sync >= 32 && sClk) {
+        if (c_f_sync >= 32) {
         digitalWrite(DAC_FSYNC, HIGH);
-        // delayMicroseconds(1); //causing ugly discontinuity
+        delayMicroseconds(1); //causing ugly discontinuity
         // Serial.println("wrote f_sync");
         digitalWrite(DAC_FSYNC, LOW);
         c_f_sync = 0;
