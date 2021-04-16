@@ -31,7 +31,7 @@ PeriodicTimer t_sequencer;
 void setup() {
   Serial.begin(9600);
   myAnalogS.setup();
-  t_updateCV.begin(updateAnalog, 1_MHz);
+  t_updateCV.begin(updateAnalog, 1_kHz);
   // t_sequencer.begin(sequencer, 1_Hz);
   myAnalogS.myCvTable[VCO_CV_0] = -DAC_FULLSCALE;
   // myAnalogS.myCvTable[WAVE_SEL_0] = -1000;
