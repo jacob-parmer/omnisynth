@@ -23,17 +23,18 @@ void AnalogSynth_omni::setup() {
     //configure DAC
     pinMode(DAC_DIN, OUTPUT);
     pinMode(DAC_FSYNC, OUTPUT);
+    digitalWrite(DAC_FSYNC, 1); //start Fsync high, bit 15
     pinMode(DAC_SCLK, OUTPUT);
     pinMode(DAC_RSTB, OUTPUT);
     digitalWrite(DAC_RSTB, 1);
     pinMode(DAC_BPB, OUTPUT);
-    digitalWrite(DAC_BPB, 1);
+    digitalWrite(DAC_BPB, 0);
     pinMode(DAC_MUTEB, OUTPUT);
     digitalWrite(DAC_MUTEB, 1); //disable mute
     pinMode(DAC_OSR1, OUTPUT);
     digitalWrite(DAC_OSR1, 0); //osr = 16. adjustable
     pinMode(DAC_OSR2, OUTPUT);
-    digitalWrite(DAC_OSR2, 1);
+    digitalWrite(DAC_OSR2, 0);
 
     //configure MUX
     pinMode(MUX_INHIB, OUTPUT);
@@ -125,45 +126,34 @@ void AnalogSynth_omni::setMuxChannel(byte CvNum) {
 }
  
 void AnalogSynth_omni::writeCV_All_Loop() {
-    c_f_sync++;
-        if (c_f_sync >= 32 && sClk) {
-        digitalWrite(DAC_FSYNC, HIGH);
-        // delayMicroseconds(1); //causing ugly discontinuity
-        // Serial.println("wrote f_sync");
+    // c_f_sync++;
+    if (counter_dacBit == 15 && next_sClk == LOW) {
         digitalWrite(DAC_FSYNC, LOW);
-        c_f_sync = 0;
-        // delayMicroseconds(1);
-        int muxChannel = loopCvNum -1;
-        if (muxChannel == -1) {muxChannel = 31;}
-        setMuxChannel(muxChannel);
         loopCvNum++;
-        if (loopCvNum == 32) {loopCvNum = 0;}        
-        }
-    // if (c_f_sync == 1)
-    // {
-    //     setMuxChannel(loopCvNum);
-    // }
-    sClk ^=1;
-    digitalWrite(DAC_SCLK, sClk);
+        if (loopCvNum == 32) {loopCvNum = 0;}
+    }
+    if (counter_dacBit == 15 && next_sClk == LOW) {
+        // int muxChannel = loopCvNum-1;
+        // if (muxChannel == -1) {muxChannel = 31;}
+        setMuxChannel(loopCvNum);
+    }
+
+    if (counter_dacBit == 1 && next_sClk == HIGH)  {
+        digitalWrite(DAC_FSYNC, HIGH);
+    } 
     
-    if (!sClk) //falling edge
+    digitalWrite(DAC_SCLK, next_sClk); //bit 15 LOW
+    next_sClk ^=1;
+
+    if (next_sClk) //falling edge
     {
         short dac_word = myCvTable[loopCvNum];
-        if (c_dacBitCounter == 0) {c_dacBitCounter = 16;}
-        c_dacBitCounter--;
-        bool dac_bit = ((dac_word >> c_dacBitCounter) & 0x01 );
+        bool dac_bit = ((dac_word >> counter_dacBit) & 0x01 );
         digitalWrite(DAC_DIN, dac_bit);
-        // if (myCvTable[loopCvNum] != 0)
-        // {
-        //     Serial.print(loopCvNum);
-        //     Serial.print("\t");
-        //     Serial.print(myCvTable[loopCvNum]);
-        //     Serial.print("\t");
-        //     Serial.print(dac_bit);
-        //     Serial.print("\t");
-        //     Serial.print(c_dacBitCounter);
-        //     Serial.print("\n\n");
-        // }      
+
+        if (counter_dacBit != 0) {counter_dacBit--;}
+        else {counter_dacBit = 15;}
+  
     }
 
      
@@ -177,22 +167,22 @@ void AnalogSynth_omni::writeCV_Envelopes() {
 }
 
 void AnalogSynth_omni::writeSpecificCV(byte CvNum) {
-    sClk ^=1;
-    digitalWrite(DAC_SCLK, sClk);
-    c_f_sync++;
-    // uint16_t dac_word = myCvTable[loopCvNum];
-    if (sClk)
-    {
-        bool dac_bit = ((myCvTable[CvNum] << (c_f_sync << 1)) & 1<<15 ) >> 15;
-        digitalWrite(DAC_DIN, dac_bit);
-        // Serial.println(myCvTable[loopCvNum]);
-    }
+    // next_sClk ^=1;
+    // digitalWrite(DAC_SCLK, next_sClk);
+    // c_f_sync++;
+    // // uint16_t dac_word = myCvTable[loopCvNum];
+    // if (next_sClk)
+    // {
+    //     bool dac_bit = ((myCvTable[CvNum] << (c_f_sync << 1)) & 1<<15 ) >> 15;
+    //     digitalWrite(DAC_DIN, dac_bit);
+    //     // Serial.println(myCvTable[loopCvNum]);
+    // }
     
-    if (c_f_sync > 31) {
-        digitalWrite(DAC_FSYNC, HIGH);       
-        digitalWrite(DAC_FSYNC, LOW);
-        c_f_sync = 0;
-    }
+    // if (c_f_sync > 31) {
+    //     digitalWrite(DAC_FSYNC, HIGH);       
+    //     digitalWrite(DAC_FSYNC, LOW);
+    //     c_f_sync = 0;
+    // }
 }
 //Trigger VCA ADSR modulation for input MIDI message
 void noteOn(midi_message msg, std::vector<midi_message> *notes) {
@@ -202,3 +192,16 @@ void noteOn(midi_message msg, std::vector<midi_message> *notes) {
  void noteOff(midi_message msg, std::vector<midi_message> *notes) {
 
  }
+
+
+         // if (myCvTable[loopCvNum] != 0)
+        // {
+        //     Serial.print(loopCvNum);
+        //     Serial.print("\t");
+        //     Serial.print(myCvTable[loopCvNum]);
+        //     Serial.print("\t");
+        //     Serial.print(dac_bit);
+        //     Serial.print("\t");
+        //     Serial.print(counter_dacBit);
+        //     Serial.print("\n\n");
+        // }    

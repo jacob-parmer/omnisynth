@@ -20,6 +20,7 @@
 #define DAC_OSR1 8 //OVERSAMPLE RATE
 #define DAC_OSR2 9 //OVERSAMPLE RATE
 #define DAC_FULLSCALE 0x7FFF
+#define DAC_4VOLTS 26214
 #define BitCLK_MICROS 150
 /*
 CV PARAMETERS DEFINITIONS
@@ -74,10 +75,9 @@ class AnalogSynth_omni {
         void writeSpecificCV(byte);
 
 
-        bool sClk = 1;
-        byte c_f_sync = 0;
-        byte c_dacBitCounter = 16;
-        byte loopCvNum = 0;
+        bool next_sClk = 0;
+        byte counter_dacBit = 15;
+        int loopCvNum = -1; //immediately increments to 0
         Upd_Modes updateMode;  
 
 };
