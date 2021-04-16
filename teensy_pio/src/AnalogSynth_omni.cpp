@@ -28,7 +28,7 @@ void AnalogSynth_omni::setup() {
     pinMode(DAC_RSTB, OUTPUT);
     digitalWrite(DAC_RSTB, 1);
     pinMode(DAC_BPB, OUTPUT);
-    digitalWrite(DAC_BPB, 1);
+    digitalWrite(DAC_BPB, 0);
     pinMode(DAC_MUTEB, OUTPUT);
     digitalWrite(DAC_MUTEB, 1); //disable mute
     pinMode(DAC_OSR1, OUTPUT);
@@ -132,13 +132,13 @@ void AnalogSynth_omni::writeCV_All_Loop() {
         loopCvNum++;
         if (loopCvNum == 32) {loopCvNum = 0;}
     }
-    if (counter_dacBit == 15 && next_sClk == HIGH) {
-        int muxChannel = loopCvNum -1;
-        if (muxChannel == -1) {muxChannel = 31;}
-        setMuxChannel(muxChannel);
+    if (counter_dacBit == 15 && next_sClk == LOW) {
+        // int muxChannel = loopCvNum-1;
+        // if (muxChannel == -1) {muxChannel = 31;}
+        setMuxChannel(loopCvNum);
     }
 
-    if (counter_dacBit == 0 && next_sClk == LOW)  {
+    if (counter_dacBit == 1 && next_sClk == HIGH)  {
         digitalWrite(DAC_FSYNC, HIGH);
     } 
     
