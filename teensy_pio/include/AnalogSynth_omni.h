@@ -78,6 +78,7 @@ class AnalogSynth_omni {
         bool next_sClk = 0;
         byte counter_dacBit = 15;
         int loopCvNum = -1; //immediately increments to 0
+        byte muxCvNum = 31;
         Upd_Modes updateMode;  
 
 };

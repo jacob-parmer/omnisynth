@@ -16,23 +16,22 @@ uint16_t notesCount = 0;
 int noteFreqSeq = 0;
 short vca = 0;
 void sequencer() {
-  // myAnalogS.myCvTable[VCO_CV_0] = noteFreqSeq;
-  // noteFreqSeq += 0xF;
-  // if (noteFreqSeq > 0x7FFF) {
-  //   noteFreqSeq = 0;
-  // }
-  
-  myAnalogS.myCvTable[VCO_CV_0] = 0;
-  myAnalogS.myCvTable[MIX_BALANCE_CV_0] = -vca;
-  myAnalogS.myCvTable[VCA_CV_0] = vca;
-  // myAnalogS.myCvTable[VCA_CV_0] = 0;
-  Serial.println(myAnalogS.myCvTable[VCA_CV_0]);
-  if (vca == 0)
-  {
-    vca = DAC_FULLSCALE;
-  } else {
-    vca = 0;
+  myAnalogS.myCvTable[VCO_CV_0] = noteFreqSeq;
+  Serial.println(myAnalogS.myCvTable[VCO_CV_0]);
+  noteFreqSeq += 0xFF;
+  if (noteFreqSeq > 0x7FFF) {
+    noteFreqSeq = -DAC_FULLSCALE;
   }
+  // myAnalogS.myCvTable[VCO_CV_0] = 0;
+  // myAnalogS.myCvTable[MIX_BALANCE_CV_0] = -vca;
+  // myAnalogS.myCvTable[VCA_CV_0] = vca;
+  // // myAnalogS.myCvTable[VCA_CV_0] = 0;
+  // if (vca == 0)
+  // {
+  //   vca = DAC_FULLSCALE;
+  // } else {
+  //   vca = 0;
+  // }
 }
 void updateAnalog() {
   myAnalogS.update();
@@ -42,17 +41,17 @@ PeriodicTimer t_updateCV;
 PeriodicTimer t_sequencer;
 
 void setup() {
-  Serial.begin(9600);
+  // Serial.begin(9600);
   myAnalogS.setup();
   t_updateCV.begin(updateAnalog, 1000_kHz);
-  // t_sequencer.begin(sequencer, 5_Hz);
-  myAnalogS.myCvTable[VCO_CV_0] = -DAC_4VOLTS; 
-  myAnalogS.myCvTable[MOD_AMT_0] = DAC_FULLSCALE/2;
+  t_sequencer.begin(sequencer, 500_Hz);
+  myAnalogS.myCvTable[VCO_CV_0] = DAC_4VOLTS/3; 
+  // myAnalogS.myCvTable[MOD_AMT_0] = DAC_FULLSCALE/2;
   myAnalogS.myCvTable[WAVE_SEL_0] = -DAC_FULLSCALE/5;
-  myAnalogS.myCvTable[PWM_CV_0] = DAC_FULLSCALE/3;
-  myAnalogS.myCvTable[MIX_BALANCE_CV_0] = DAC_FULLSCALE/2;
+  // myAnalogS.myCvTable[PWM_CV_0] = DAC_FULLSCALE/3;
+  myAnalogS.myCvTable[MIX_BALANCE_CV_0] = -DAC_FULLSCALE/2;
   myAnalogS.myCvTable[FILT_RES_CV_0] = DAC_FULLSCALE/5;
-  myAnalogS.myCvTable[VCF_CV_0] = DAC_FULLSCALE/2;
+  myAnalogS.myCvTable[VCF_CV_0] = -DAC_FULLSCALE/2;
   myAnalogS.myCvTable[VCA_CV_0] = DAC_4VOLTS;
 
   // myAnalogS.myCvTable[8 + VCO_CV_0] = DAC_FULLSCALE/2;

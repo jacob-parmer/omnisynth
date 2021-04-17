@@ -133,9 +133,9 @@ void AnalogSynth_omni::writeCV_All_Loop() {
         if (loopCvNum == 32) {loopCvNum = 0;}
     }
     if (counter_dacBit == 15 && next_sClk == LOW) {
-        // int muxChannel = loopCvNum-1;
-        // if (muxChannel == -1) {muxChannel = 31;}
-        setMuxChannel(loopCvNum);
+        setMuxChannel(muxCvNum);
+        muxCvNum++;
+        if (muxCvNum == 32) {muxCvNum = 0;}
     }
 
     if (counter_dacBit == 1 && next_sClk == HIGH)  {
@@ -155,8 +155,6 @@ void AnalogSynth_omni::writeCV_All_Loop() {
         else {counter_dacBit = 15;}
   
     }
-
-     
 }
 
 //Prioritized CV update functions //
