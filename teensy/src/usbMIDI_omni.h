@@ -1,9 +1,12 @@
 // Author: Jacob Parmer
 // Date: Mar 8, 2021
+#ifndef OMNIMIDI_H
+#define OMNIMIDI_H
 
+#include <Arduino.h>
+#include <stdio.h>
 #include <vector>
 #include <array>
-
 #define NOTE_OFF 0x81
 #define NOTE_ON 0x91
 #define AFTERTOUCH 0xA1
@@ -18,6 +21,7 @@
 
 #define MIDI_PACKET_SIZE 3
 
+//Standard MIDI message size.
 typedef std::array<byte, MIDI_PACKET_SIZE> midi_message;
 
 /* ------------------- CLASS DEFINITION ------------------- */
@@ -25,9 +29,9 @@ class OmniMIDI {
 
     public:
         OmniMIDI();
-        void read();
-        void omniNoteOn(midi_message msg);
-        void omniNoteOff(midi_message msg);
+        int read();
+        int omniNoteOn(midi_message);
+        int omniNoteOff(midi_message);
         std::vector<midi_message> getNotesOn();
 
     private:
@@ -36,83 +40,5 @@ class OmniMIDI {
 
 };
 
-OmniMIDI::OmniMIDI() {
-    return;
-}
-
-void OmniMIDI::read() {
-
-    if (Serial.available() != 0) {
-
-        while ((Serial.available() % MIDI_PACKET_SIZE) != 0) {
-            Serial.print("Waiting on rest of midi packet. Size of serial queue: ");
-            Serial.println(Serial.available());
-            delay(100);
-        }; // waits for full MIDI packet to arrive
-
-        byte header = Serial.read();
-        byte data1 = Serial.read();
-        byte data2 = Serial.read();
-
-        last_received_message[EVENT_INDEX] = header;
-        last_received_message[KEY_INDEX] = data1;
-        last_received_message[VELOCITY_INDEX] = data2;
-
-        if (header == NOTE_ON) {
-            this->omniNoteOn(last_received_message);
-        } 
-        else if (header == NOTE_OFF) {
-            this->omniNoteOff(last_received_message);
-        }
-
-        Serial.println(header);        
-    }
-}
-
-void OmniMIDI::omniNoteOn(midi_message msg) {
-    Serial.println("Note on detected.");
-
-    // Checks if the note is already on - aka handles duplicates
-    for (std::vector<midi_message>::iterator it = notes_on.begin(); it != notes_on.end(); ++it) {
-        midi_message note = *it;
-        if (note[KEY_INDEX] == msg[KEY_INDEX]) {
-            Serial.println("Duplicate note detected. Not added to notes_on.");
-            return;
-        }
-
-	Serial.println(note[KEY_INDEX]);
-    }
-
-    Serial.println(msg[KEY_INDEX]);
-    this->notes_on.push_back(msg);
-}
-
-void OmniMIDI::omniNoteOff(midi_message msg) {
-    Serial.println("Note off detected.");
-    for (std::vector<midi_message>::iterator it = notes_on.begin(); it != notes_on.end(); ++it) {
-        midi_message note = *it;
-        if (note[KEY_INDEX] == msg[KEY_INDEX]) {
-            notes_on.erase(it);
-            break;
-        }
-    }
-}
-
-std::vector<midi_message> OmniMIDI::getNotesOn() { return this->notes_on; }
-
-
-/* ------------------- HELPER FUNCTIONS ------------------- */
-
-float avgNoteVelocity(std::vector<midi_message> notes_on) {
-
-    int velocity_sum = 0;
-    for (std::vector<midi_message>::iterator it = notes_on.begin(); it != notes_on.end(); ++it) {
-        midi_message note = *it;
-        velocity_sum += note[VELOCITY_INDEX];
-    }
-
-    float avg_velocity = velocity_sum / notes_on.size();
-    
-    return avg_velocity;
-
-}
+float avgNoteVelocity(std::vector<midi_message>);
+#endif
